@@ -71,6 +71,35 @@
   overflow-x: auto;
 }
 
+.mobile-cards {
+  display: none;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 20px auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.mobile-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.mobile-card-name {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.mobile-card-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  font-size: 13px;
+}
+
 .data-table {
   width: 100%;
   min-width: 560px;
@@ -126,6 +155,15 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .table-container.desktop {
+    display: none;
+  }
+
+  .mobile-cards {
+    display: block;
+    padding: 0 12px;
+  }
+
   .hero {
     padding: 12px;
   }

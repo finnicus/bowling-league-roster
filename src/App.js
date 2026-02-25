@@ -198,6 +198,21 @@ function BowlersTable({ data }) {
         </table>
       </div>
 
+      {/* MOBILE: Card List Fallback */}
+      <div className="mobile-cards">
+        {data.map((bowler, index) => (
+          <div className="mobile-card" key={`${bowler.bowler}-${index}`}>
+            <div className="mobile-card-name">{bowler.bowler}</div>
+            <div className="mobile-card-stats">
+              <span>Hdcp: <strong>{bowler.hdcp}</strong></span>
+              <span>Games: <strong>{bowler.totalGames.toLocaleString()}</strong></span>
+              <span>Total: <strong>{bowler.totalScore.toLocaleString()}</strong></span>
+              <span>Avg: <strong>{bowler.average}</strong></span>
+            </div>
+          </div>
+        ))}
+      </div>
+
     </>
   );
 }
