@@ -4,6 +4,7 @@ export const REFRESH_INTERVAL = 300000; // 5 minutes in milliseconds
 const MASTER_WORKBOOK = '2PACX-1vQLJDJ0tRftkDJQ8v0DO35q6Kymvp2GmdMwfeP8r6GuHcEAL97EJp1K9qlF8oOLTWvTW-Xg8d0l3UtP';
 const BOWLERS_SHEET = '1560652729';
 const ROSTERS_SHEET = '2108495623';
+const SETTINGS_SHEET = '1970364122';
 
 const LEAGUE_CONFIG = {
   tampines: {
@@ -37,7 +38,7 @@ const buildDataSheetUrl = (gid) => (
 
 const BOWLERS_SHEET_URL = buildDataSheetUrl(BOWLERS_SHEET);
 const ROSTERS_SHEET_URL = buildDataSheetUrl(ROSTERS_SHEET);
-
+const SETTINGS_SHEET_URL = buildDataSheetUrl(SETTINGS_SHEET);
 
 const DUMMY_BOWLERS_DATA = [
   {
@@ -69,13 +70,45 @@ const DUMMY_BOWLERS_DATA = [
   },
 ];
 
+const parseCSVLine = (line) => {
+  const values = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+
+    if (char === '"') {
+      const nextChar = line[i + 1];
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === ',' && !inQuotes) {
+      values.push(current.trim());
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  values.push(current.trim());
+  return values;
+};
+
 const parseCSV = (csvText) => {
-  const lines = csvText.split('\n').filter(line => line.trim());
+  const lines = csvText.split('\n').map((line) => line.replace(/\r$/, '')).filter(line => line.trim());
   if (lines.length < 2) return [];
 
-  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+  const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/"/g, ''));
   return lines.slice(1).map(line => {
-    const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+    const values = parseCSVLine(line).map(v => v.trim().replace(/"/g, ''));
     const row = {};
     headers.forEach((header, i) => row[header] = values[i] || '');
     return row;
@@ -102,6 +135,42 @@ export const getAppConfigFromURL = (search = '') => {
 };
 
 export const getAppConfigFromUrl = getAppConfigFromURL;
+
+export const fetchSettingsData = async (config) => {
+  const response = await axios.get(config.settingsSheetUrl || SETTINGS_SHEET_URL);
+  const parsedData = parseCSV(response.data);
+
+  const settingsRows = parsedData.filter((row) => {
+    const rowLeague = String(row.League || row.league || '').trim().toLowerCase();
+    return rowLeague === config.league;
+  });
+
+  if (settingsRows.length === 0) {
+    return {
+      data: null,
+      updatedAt: new Date(),
+      source: 'csv',
+    };
+  }
+
+  const activeRow = settingsRows.find((row) => {
+    const activeText = String(row.Active || row.active || '').trim().toUpperCase();
+    return activeText === 'TRUE' || activeText === 'YES' || activeText === '1';
+  }) || settingsRows[0];
+
+  return {
+    data: {
+      A: String(activeRow.A || activeRow.a || '').trim().toUpperCase(),
+      B: String(activeRow.B || activeRow.b || '').trim().toUpperCase(),
+      C: String(activeRow.C || activeRow.c || '').trim().toUpperCase(),
+      Reserved: String(activeRow.Reserved || activeRow.reserved || '').trim().toUpperCase(),
+      season: String(activeRow.Season || activeRow.season || '').trim(),
+      title: String(activeRow.Title || activeRow.title || '').trim(),
+    },
+    updatedAt: new Date(),
+    source: 'csv',
+  };
+};
 
 export const fetchData = async (bowlers) => {
   if (bowlers.useDummyData) {
@@ -200,34 +269,41 @@ export const fetchRosterData = async (config) => {
     .map((row) => {
       const date = String(row.Date || row.date || '').trim();
       const parsedDate = parseRosterDate(date);
-      const bowlers = [
-        {
+      const slots = {
+        A: {
+          slot: 'A',
           name: String(row['Bowler A'] || row['bowler a'] || '').trim(),
           status: String(row['Status A'] || row['status a'] || '').trim(),
           isReserve: false,
         },
-        {
+        B: {
+          slot: 'B',
           name: String(row['Bowler B'] || row['bowler b'] || '').trim(),
           status: String(row['Status B'] || row['status b'] || '').trim(),
           isReserve: false,
         },
-        {
+        C: {
+          slot: 'C',
           name: String(row['Bowler C'] || row['bowler c'] || '').trim(),
           status: String(row['Status C'] || row['status c'] || '').trim(),
           isReserve: false,
         },
-        {
+        Reserved: {
+          slot: 'Reserved',
           name: String(row['Bowler R'] || row['bowler r'] || '').trim(),
           status: String(row['Status R'] || row['status r'] || '').trim(),
           isReserve: true,
         },
-      ].filter((entry) => entry.name);
+      };
+
+      const bowlers = Object.values(slots).filter((entry) => entry.name);
 
       return {
         league: String(row.League || row.league || '').trim(),
         date,
         parsedDate,
         opponent: String(row.Opponent || row.opponent || '').trim(),
+        slots,
         bowlers,
       };
     })

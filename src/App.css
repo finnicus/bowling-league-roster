@@ -118,6 +118,10 @@
   padding: 10px 12px;
 }
 
+.roster-card-next {
+  background-color: #fff9db;
+}
+
 .roster-date {
   margin: 0 0 6px 0;
   font-size: 16px;
@@ -199,6 +203,44 @@
   border-radius: 50%;
   font-size: 11px;
   font-weight: 700;
+}
+
+.suggestion-wrap {
+  margin-bottom: 16px;
+}
+
+.suggestion-card {
+  margin: 0;
+  background-color: #eaf4ff;
+}
+
+.suggestion-title {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+}
+
+.suggestion-label {
+  margin: 0 0 4px 0;
+  font-size: 12px;
+  font-style: italic;
+  color: #c62828;
+}
+
+.suggestion-meta {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.suggestion-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.suggestion-table td {
+  text-align: left;
+  padding: 2px 0;
+  border: none;
+  font-size: 13px;
 }
 
 .data-table {

@@ -85,14 +85,8 @@ function Roster({ appConfig }) {
 
   const cards = useMemo(() => {
     const today = getSingaporeTodayUtc();
-    const upcoming = rosterRows.filter((row) => row.parsedDate >= today);
-
-    if (appConfig.view === 'roster') {
-      return upcoming.slice(0, 3);
-    }
-
-    return upcoming.slice(0, 3);
-  }, [appConfig.view, rosterRows]);
+    return rosterRows.filter((row) => row.parsedDate >= today && Array.isArray(row.bowlers) && row.bowlers.length > 0);
+  }, [rosterRows]);
 
   const formatDisplayDate = (dateValue, parsedDate) => {
     if (!parsedDate) return dateValue;
@@ -105,8 +99,8 @@ function Roster({ appConfig }) {
   return (
     <section className="roster-container">
       <div className="roster-grid">
-        {cards.map((card) => (
-          <article className="roster-card" key={`${card.league}-${card.date}-${card.opponent}`}>
+        {cards.map((card, index) => (
+          <article className={`roster-card ${index === 0 ? 'roster-card-next' : ''}`} key={`${card.league}-${card.date}-${card.opponent}`}>
             <h3 className="roster-date">Date: {formatDisplayDate(card.date, card.parsedDate)}</h3>
             <p className="roster-opponent"><strong>Team: {card.opponent || 'TBD'}</strong></p>
             <table className="roster-bowlers-table" aria-label={`Bowlers for ${card.date}`}>

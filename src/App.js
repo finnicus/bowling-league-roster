@@ -3,6 +3,7 @@ import TimeAgo from 'react-timeago';
 import { getAppConfigFromURL } from './Api';
 import Summary from './Summary';
 import Roster from './Roster';
+import Suggestion from './Suggestion';
 import pinfinityLogo from './pinfinity.png';
 import tampinesLogo from './tampines.png';
 import pinpalsLogo from './pinpals.png';
@@ -58,6 +59,7 @@ function App() {
           onLastUpdatedChange={setLastUpdated}
         />
         <Roster appConfig={appConfig} />
+        <Suggestion appConfig={appConfig} />
       </main>
     </div>
   );
