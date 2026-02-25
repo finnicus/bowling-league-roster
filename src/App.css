@@ -20,7 +20,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+  font-size: calc(9px + 2vmin);
   color: white;
 }
 
@@ -84,7 +84,7 @@
 }
 
 .live-badge {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -113,7 +113,7 @@
 
 .roster-heading {
   margin: 0 0 10px 0;
-  font-size: 18px;
+  font-size: 19px;
 }
 
 .roster-card {
@@ -132,12 +132,12 @@
 
 .roster-date {
   margin: 0 0 6px 0;
-  font-size: 17px;
+  font-size: 18px;
 }
 
 .roster-opponent {
   margin: 0 0 8px 0;
-  font-size: 17px;
+  font-size: 18px;
 }
 
 
@@ -154,7 +154,7 @@
 }
 
 .roster-item {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.2;
 }
 
@@ -189,7 +189,7 @@
   border-radius: 10px;
   background-color: #e9eef7;
   color: #0b3d91;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   text-align: center;
   line-height: 1.4;
@@ -209,7 +209,7 @@
   background-color: #f57c00;
   color: #ffffff;
   border-radius: 50%;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -224,19 +224,19 @@
 
 .suggestion-title {
   margin: 0 0 4px 0;
-  font-size: 18px;
+  font-size: 19px;
 }
 
 .suggestion-label {
   margin: 0 0 4px 0;
-  font-size: 13px;
+  font-size: 14px;
   font-style: italic;
   color: #c62828;
 }
 
 .suggestion-meta {
   margin: 0 0 8px 0;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .suggestion-table {
@@ -248,13 +248,13 @@
   text-align: left;
   padding: 2px 0;
   border: none;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13px;
   background-color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
@@ -272,7 +272,7 @@
 }
 
 .data-table td {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.1;
 }
 
@@ -281,7 +281,7 @@
   font-weight: 600;
   color: #333;
   border-bottom: 3px solid #999;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.1;
 }
 
@@ -320,7 +320,7 @@
   .data-table {
     table-layout: fixed;
     min-width: 100%;
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .data-table th,
@@ -331,12 +331,12 @@
   }
 
   .data-table th {
-    font-size: 12px;
+    font-size: 11px;
     line-height: 1.05;
   }
 
   .data-table td {
-    font-size: 12px;
+    font-size: 11px;
     line-height: 1.05;
   }
 
@@ -374,7 +374,7 @@
   .roster-hdcp-badge {
     min-width: 30px;
     padding: 0 4px;
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .hero-content {
@@ -394,7 +394,7 @@
     flex: 1;
     max-width: 100%;
     min-width: 0;
-    font-size: 20px;
+    font-size: 19px;
     line-height: 1.2;
     overflow-wrap: anywhere;
     word-break: break-word;
@@ -405,7 +405,7 @@
   }
 
   .live-badge {
-    font-size: 12px;
+    font-size: 11px;
     white-space: normal;
   }
 }
@@ -423,12 +423,12 @@
   }
 
   .data-table th {
-    font-size: 11px;
+    font-size: 10px;
     line-height: 1;
   }
 
   .data-table td {
-    font-size: 11px;
+    font-size: 10px;
     line-height: 1;
   }
 
@@ -451,7 +451,7 @@
   }
 
   .live-badge {
-    font-size: 11px;
+    font-size: 10px;
     line-height: 1.1;
   }
 }
