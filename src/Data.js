@@ -3,13 +3,11 @@ export const MASTER_SHEET = "2PACX-1vQLJDJ0tRftkDJQ8v0DO35q6Kymvp2GmdMwfeP8r6GuH
 export const TAMPINES_GID = "1560652729";
 export const LEAGUE_CONFIG = {
 	tampines: {
-		gid: TAMPINES_GID,
 		title: 'Pinfinity Tampines Wednesday',
 		logo: 'tampines',
 		useDummyData: false,
 	},
 	dummy: {
-		gid: null,
 		title: 'Pinfinity Dummy',
 		logo: 'pinfinity',
 		useDummyData: true,
@@ -68,6 +66,6 @@ export const getAppConfigFromUrl = (search = '') => {
 		title: leagueSettings.title,
 		logo: leagueSettings.logo || 'pinfinity',
 		useDummyData: Boolean(leagueSettings.useDummyData),
-		bowlersSheetUrl: leagueSettings.gid ? buildBowlersSheetUrl(leagueSettings.gid) : null,
+		bowlersSheetUrl: BOWLERS_SHEET_URL,
 	};
 };

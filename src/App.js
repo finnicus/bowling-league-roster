@@ -78,7 +78,12 @@ function App() {
     try {
       const response = await axios.get(appConfig.bowlersSheetUrl);
       const parsedData = parseCSV(response.data);
-      const bowlers = parsedData.map(row => {
+      const filteredData = parsedData.filter(row => {
+        const rowLeague = String(row.League || row.league || '').trim().toLowerCase();
+        return rowLeague === appConfig.league;
+      });
+
+      const bowlers = filteredData.map(row => {
         const gender = row.Gender || row.gender;
         const normalizedGender = String(gender || '').trim().toUpperCase();
         const active = row.Active === 'YES' || row.active === 'yes';
@@ -132,7 +137,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, [appConfig.bowlersSheetUrl, appConfig.useDummyData]);
+  }, [appConfig.bowlersSheetUrl, appConfig.league, appConfig.useDummyData]);
 
   useEffect(() => {
     fetchBowlersData();
