@@ -83,7 +83,7 @@ function App() {
         }
         
         return {
-          bowler: `${statusIcon} ${bowlerName}[${gender}]`,
+          bowler: `${statusIcon}${bowlerName}[${gender}]`,
           gender,
           active,
           hdcp,
