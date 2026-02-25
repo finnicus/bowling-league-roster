@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
 import TimeAgo from 'react-timeago';
 import { BOWLERS_SHEET_URL, FEMALE_AVERAGE_THRESHOLD, MALE_AVERAGE_THRESHOLD, MALE_MAX_HANDICAP, FEMALE_MAX_HANDICAP, REFRESH_INTERVAL } from './Data';
+import pinfinityLogo from './pinfinity.png';
 import './App.css';
 
 const parseCSV = (csvText) => {
@@ -141,7 +142,10 @@ function App() {
     <div className="app">
       <header className="hero">
         <div className="hero-content">
-          <h1>Pinfinity Tampines Wednesday</h1>
+          <div className="logo-section">
+            <img src={pinfinityLogo} alt="Pinfinity Logo" className="site-logo" />
+            <h1>Pinfinity Tampines Wednesday</h1>
+          </div>
           <div className="live-badge">
             Last Updated: {lastUpdated ? <TimeAgo date={lastUpdated} /> : 'Loading...'}
           </div>
