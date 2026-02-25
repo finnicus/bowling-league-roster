@@ -133,13 +133,16 @@ function Roster({ appConfig }) {
                     ? `${entry.name} (Reserve)`
                     : entry.name;
                   const isConfirmed = String(entry.status || '').trim().toUpperCase() === 'YES';
-                  const statusIcon = isConfirmed ? '✅' : '🟠';
+                  const statusIcon = isConfirmed ? '✅' : '?';
+                  const statusClassName = isConfirmed ? 'status-confirmed' : 'status-pending';
 
                   return (
                     <tr className="roster-item" key={`${card.date}-${entry.name}-${entry.isReserve ? 'reserve' : 'main'}`}>
                       <td className="roster-item-name">{displayName}</td>
                       <td className="roster-item-hdcp">[{stats.hdcp}]</td>
-                      <td className="roster-item-status" aria-label={isConfirmed ? 'confirmed' : 'pending response'}>{statusIcon}</td>
+                      <td className={`roster-item-status ${statusClassName}`} aria-label={isConfirmed ? 'confirmed' : 'pending response'}>
+                        <span className={`roster-status-icon ${statusClassName}`}>{statusIcon}</span>
+                      </td>
                     </tr>
                   );
                 })}
