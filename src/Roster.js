@@ -91,16 +91,7 @@ function Roster({ appConfig }) {
       return upcoming.slice(0, 3);
     }
 
-    if (rosterRows.length === 0) {
-      return [];
-    }
-
-    const firstEntry = rosterRows[0];
-    if (today <= firstEntry.parsedDate) {
-      return [firstEntry];
-    }
-
-    return upcoming.slice(0, 1);
+    return upcoming.slice(0, 3);
   }, [appConfig.view, rosterRows]);
 
   const formatDisplayDate = (dateValue, parsedDate) => {
@@ -116,7 +107,7 @@ function Roster({ appConfig }) {
       <div className="roster-grid">
         {cards.map((card) => (
           <article className="roster-card" key={`${card.league}-${card.date}-${card.opponent}`}>
-            <h3 className="roster-date">Match: {formatDisplayDate(card.date, card.parsedDate)}</h3>
+            <h3 className="roster-date">Date: {formatDisplayDate(card.date, card.parsedDate)}</h3>
             <p className="roster-opponent"><strong>Team: {card.opponent || 'TBD'}</strong></p>
             <table className="roster-bowlers-table" aria-label={`Bowlers for ${card.date}`}>
               <tbody>
