@@ -23,27 +23,27 @@ const columnHelper = createColumnHelper();
 
 const columns = [
   columnHelper.accessor('bowler', {
-    header: 'Bowler Name',
+    header: 'Bowler',
     cell: info => <span className="bowler-name">{info.getValue()}</span>,
     size: 100,
   }),
   columnHelper.accessor('hdcp', {
-    header: 'Handicap',
+    header: 'Hdcp',
     cell: info => <strong>{info.getValue()}</strong>,
     size: 30,
   }),
   columnHelper.accessor('totalGames', {
-    header: 'Total Games',
+    header: 'Games',
     cell: info => info.getValue().toLocaleString(),
     size: 30,
   }),
   columnHelper.accessor('totalScore', {
-    header: 'Total Score',
+    header: 'Score',
     cell: info => info.getValue().toLocaleString(),
     size: 50,
   }),
   columnHelper.accessor('average', {
-    header: 'Average',
+    header: 'Avg',
     cell: info => <span className="highlight">{info.getValue()}</span>,
     size: 50,
   }),
