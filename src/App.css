@@ -86,18 +86,32 @@
   background: #fff;
   padding: 10px;
   margin-bottom: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .mobile-card-name {
   font-weight: 700;
   margin-bottom: 6px;
+  word-break: break-word;
 }
 
 .mobile-card-stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   font-size: 13px;
+}
+
+.mobile-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-stat-row span {
+  color: #333;
 }
 
 .data-table {
@@ -174,11 +188,34 @@
     gap: 10px;
   }
 
+  .logo-section {
+    gap: 10px;
+  }
+
+  .logo-section h1 {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
   .site-logo {
-    height: 72px;
+    height: 64px;
   }
 
   .table-container {
     padding: 0 12px;
+  }
+
+  .mobile-card {
+    padding: 8px;
+  }
+
+  .mobile-card-name {
+    font-size: 14px;
+  }
+
+  .mobile-card-stats {
+    font-size: 12px;
   }
 }

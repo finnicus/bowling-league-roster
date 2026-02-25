@@ -204,10 +204,10 @@ function BowlersTable({ data }) {
           <div className="mobile-card" key={`${bowler.bowler}-${index}`}>
             <div className="mobile-card-name">{bowler.bowler}</div>
             <div className="mobile-card-stats">
-              <span>Hdcp: <strong>{bowler.hdcp}</strong></span>
-              <span>Games: <strong>{bowler.totalGames.toLocaleString()}</strong></span>
-              <span>Total: <strong>{bowler.totalScore.toLocaleString()}</strong></span>
-              <span>Avg: <strong>{bowler.average}</strong></span>
+              <div className="mobile-stat-row"><span>Handicap</span><strong>{bowler.hdcp}</strong></div>
+              <div className="mobile-stat-row"><span>Total Games</span><strong>{bowler.totalGames.toLocaleString()}</strong></div>
+              <div className="mobile-stat-row"><span>Total Score</span><strong>{bowler.totalScore.toLocaleString()}</strong></div>
+              <div className="mobile-stat-row"><span>Average</span><strong>{bowler.average}</strong></div>
             </div>
           </div>
         ))}
