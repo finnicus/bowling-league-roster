@@ -83,11 +83,88 @@
 
 /* Table Styles */
 .table-container {
-  width: 100%;
+  width: 90%;
   max-width: 1200px;
   margin: 0 auto 20px auto;
-  padding: 0 20px;
+  padding: 0;
   overflow-x: auto;
+}
+
+.roster-container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto 16px auto;
+  padding: 0;
+}
+
+.roster-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.roster-heading {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+}
+
+.roster-card {
+  width: 210px;
+  max-width: 100%;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 10px 12px;
+}
+
+.roster-date {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+}
+
+.roster-opponent {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+
+.roster-bowlers-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: none;
+}
+
+.roster-bowlers-table tbody,
+.roster-bowlers-table tr,
+.roster-bowlers-table td {
+  border: none;
+}
+
+.roster-item {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.roster-item td {
+  padding: 2px 0;
+}
+
+.roster-item-name {
+  text-align: left;
+}
+
+.roster-item-hdcp {
+  width: 48px;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.roster-item-status {
+  width: 24px;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .data-table {
@@ -141,8 +218,10 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .table-container {
-    padding: 0 12px 0 8px;
+  .table-container,
+  .roster-container {
+    width: 90%;
+    padding: 0;
   }
 
   .data-table {
@@ -219,8 +298,10 @@
 }
 
 @media (max-width: 360px) {
-  .table-container {
-    padding: 0 14px 0 6px;
+  .table-container,
+  .roster-container {
+    width: 90%;
+    padding: 0;
   }
 
   .data-table th,

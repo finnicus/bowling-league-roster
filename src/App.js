@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import TimeAgo from 'react-timeago';
 import { getAppConfigFromURL } from './Api';
 import Summary from './Summary';
+import Roster from './Roster';
 import pinfinityLogo from './pinfinity.png';
 import tampinesLogo from './tampines.png';
 import pinpalsLogo from './pinpals.png';
@@ -56,6 +57,7 @@ function App() {
           onLoadingChange={setLoading}
           onLastUpdatedChange={setLastUpdated}
         />
+        <Roster appConfig={appConfig} />
       </main>
     </div>
   );

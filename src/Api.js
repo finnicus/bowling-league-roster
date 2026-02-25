@@ -3,6 +3,7 @@ import axios from 'axios';
 export const REFRESH_INTERVAL = 300000; // 5 minutes in milliseconds
 const MASTER_WORKBOOK = '2PACX-1vQLJDJ0tRftkDJQ8v0DO35q6Kymvp2GmdMwfeP8r6GuHcEAL97EJp1K9qlF8oOLTWvTW-Xg8d0l3UtP';
 const BOWLERS_SHEET = '1560652729';
+const ROSTERS_SHEET = '2108495623';
 
 const LEAGUE_CONFIG = {
   tampines: {
@@ -35,6 +36,7 @@ const buildDataSheetUrl = (gid) => (
 );
 
 const BOWLERS_SHEET_URL = buildDataSheetUrl(BOWLERS_SHEET);
+const ROSTERS_SHEET_URL = buildDataSheetUrl(ROSTERS_SHEET);
 
 
 const DUMMY_BOWLERS_DATA = [
@@ -94,6 +96,7 @@ export const getAppConfigFromURL = (search = '') => {
     logo: leagueSettings.logo || 'pinfinity',
     useDummyData: Boolean(leagueSettings.useDummyData),
     bowlersSheetUrl: BOWLERS_SHEET_URL,
+    rostersSheetUrl: ROSTERS_SHEET_URL,
     refreshInterval: REFRESH_INTERVAL,
   };
 };
@@ -149,6 +152,87 @@ export const fetchData = async (bowlers) => {
 
     return a.hdcp - b.hdcp;
   });
+
+  return {
+    data,
+    updatedAt: new Date(),
+    source: 'csv',
+  };
+};
+
+const MONTH_INDEX = {
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11,
+};
+
+const parseRosterDate = (value) => {
+  const dateText = String(value || '').trim();
+  const match = dateText.match(/^(\d{1,2})\/([A-Za-z]{3})\/(\d{4})$/);
+  if (!match) return null;
+
+  const day = parseInt(match[1], 10);
+  const month = MONTH_INDEX[match[2].toLowerCase()];
+  const year = parseInt(match[3], 10);
+  if (month === undefined || Number.isNaN(day) || Number.isNaN(year)) return null;
+
+  return new Date(Date.UTC(year, month, day));
+};
+
+export const fetchRosterData = async (config) => {
+  const response = await axios.get(config.rostersSheetUrl || ROSTERS_SHEET_URL);
+  const parsedData = parseCSV(response.data);
+
+  const data = parsedData
+    .filter((row) => {
+      const rowLeague = String(row.League || row.league || '').trim().toLowerCase();
+      return rowLeague === config.league;
+    })
+    .map((row) => {
+      const date = String(row.Date || row.date || '').trim();
+      const parsedDate = parseRosterDate(date);
+      const bowlers = [
+        {
+          name: String(row['Bowler A'] || row['bowler a'] || '').trim(),
+          status: String(row['Status A'] || row['status a'] || '').trim(),
+          isReserve: false,
+        },
+        {
+          name: String(row['Bowler B'] || row['bowler b'] || '').trim(),
+          status: String(row['Status B'] || row['status b'] || '').trim(),
+          isReserve: false,
+        },
+        {
+          name: String(row['Bowler C'] || row['bowler c'] || '').trim(),
+          status: String(row['Status C'] || row['status c'] || '').trim(),
+          isReserve: false,
+        },
+        {
+          name: String(row['Bowler R'] || row['bowler r'] || '').trim(),
+          status: String(row['Status R'] || row['status r'] || '').trim(),
+          isReserve: true,
+        },
+      ].filter((entry) => entry.name);
+
+      return {
+        league: String(row.League || row.league || '').trim(),
+        date,
+        parsedDate,
+        opponent: String(row.Opponent || row.opponent || '').trim(),
+        bowlers,
+      };
+    })
+    .filter((row) => row.parsedDate)
+    .sort((a, b) => a.parsedDate - b.parsedDate);
 
   return {
     data,
