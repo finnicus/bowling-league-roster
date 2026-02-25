@@ -300,6 +300,10 @@
     padding: 0;
   }
 
+  .roster-grid {
+    justify-content: center;
+  }
+
   .data-table {
     table-layout: fixed;
     min-width: 100%;
