@@ -1,8 +1,8 @@
 {
-  "name": "pinfinity-tampines-wed",
-  "version": "2026.0225.11",
+  "name": "bowling-league-roster",
+  "version": "2026.0225.12",
   "private": true,
-  "homepage": "https://finnicus.github.io/pinfinity-tampines-wed",
+  "homepage": "https://finnicus.github.io/bowling-league-roster",
   "dependencies": {
     "@mantine/core": "^8.3.15",
     "@mantine/hooks": "^8.3.15",
