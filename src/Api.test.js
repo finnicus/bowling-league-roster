@@ -69,4 +69,33 @@ describe('fetchData', () => {
       average: 175,
     });
   });
+
+  test('sorts active non-zero handicap bowlers by average before games', async () => {
+    axios.get.mockResolvedValue({
+      data: [
+        'League,Bowler,Gender,Active,Total Games,Total Score,Average,Hdcp',
+        'sgcc,GamesLeader,M,YES,20,3200,160,12',
+        'sgcc,AvgLeader,F,YES,8,1480,185,10',
+      ].join('\n'),
+    });
+
+    const result = await fetchData({
+      useDummyData: false,
+      bowlersSheetUrl: 'https://example.com/sheet.csv',
+      league: 'sgcc',
+    });
+
+    expect(result.data[0]).toMatchObject({
+      bowler: '🟢\u00A0\u00A0AvgLeader',
+      average: 185,
+      totalGames: 8,
+      hdcp: 10,
+    });
+    expect(result.data[1]).toMatchObject({
+      bowler: '🟢\u00A0\u00A0GamesLeader',
+      average: 160,
+      totalGames: 20,
+      hdcp: 12,
+    });
+  });
 });

@@ -141,18 +141,13 @@ export const fetchData = async (bowlers) => {
     if (a.active && !b.active) return -1;
     if (!a.active && b.active) return 1;
 
-    if (a.active && b.active) {
-      if (a.hdcp === 0 && b.hdcp === 0) {
-        return b.average - a.average;
-      }
-      if (a.hdcp !== 0 && b.hdcp !== 0) {
-        return b.totalGames - a.totalGames;
-      }
-      if (a.hdcp === 0 && b.hdcp !== 0) return -1;
-      if (a.hdcp !== 0 && b.hdcp === 0) return 1;
-    }
+    const averageDiff = b.average - a.average;
+    if (averageDiff !== 0) return averageDiff;
 
-    return b.average - a.average;
+    const gamesDiff = b.totalGames - a.totalGames;
+    if (gamesDiff !== 0) return gamesDiff;
+
+    return a.hdcp - b.hdcp;
   });
 
   return {
