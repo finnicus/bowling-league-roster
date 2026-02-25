@@ -100,7 +100,7 @@
   padding: 2px 4px;
   text-align: left;
   border-bottom: 2px solid #ccc;
-  border-right: 2px solid #ccc;
+  border-right: none;
   white-space: nowrap;
 }
 
@@ -124,11 +124,6 @@
 
 .data-table tbody tr:last-child td {
   border-bottom: none;
-}
-
-.data-table th:last-child,
-.data-table td:last-child {
-  border-right: none;
 }
 
 /* Column widths based on content */
