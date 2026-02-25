@@ -24,7 +24,10 @@ const columnHelper = createColumnHelper();
 const columns = [
   columnHelper.accessor('bowler', {
     header: 'Bowler',
-    cell: info => <span className="bowler-name">{info.getValue()}</span>,
+    cell: info => {
+      const genderClass = info.row.original.gender === 'F' ? 'female-name' : 'male-name';
+      return <span className={`bowler-name ${genderClass}`}>{info.getValue()}</span>;
+    },
     size: 100,
   }),
   columnHelper.accessor('hdcp', {
@@ -60,6 +63,7 @@ function App() {
       const parsedData = parseCSV(response.data);
       const bowlers = parsedData.map(row => {
         const gender = row.Gender || row.gender;
+        const normalizedGender = String(gender || '').trim().toUpperCase();
         const active = row.Active === 'YES' || row.active === 'yes';
         const statusIcon = active ? '🟢' : '🔴';
         const bowlerName = (row.Bowler || row.bowler || '').replace(/\s+/g, ' ').trim();
@@ -71,7 +75,7 @@ function App() {
         
         // Calculate handicap based on gender
         let hdcp = 0;
-        if (gender.toLowerCase() === 'M' || gender.toLowerCase() === 'm') {
+        if (normalizedGender === 'M') {
           hdcp = Math.floor((MALE_AVERAGE_THRESHOLD - Math.floor(average))*0.5);
           hdcp = Math.max(0, hdcp);
           hdcp = Math.min(MALE_MAX_HANDICAP, hdcp);
@@ -83,8 +87,8 @@ function App() {
         }
         
         return {
-          bowler: `${statusIcon}${bowlerName}[${gender}]`,
-          gender,
+          bowler: `${statusIcon}${bowlerName}`,
+          gender: normalizedGender,
           active,
           hdcp,
           totalGames,
