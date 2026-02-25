@@ -62,6 +62,7 @@ function App() {
         const gender = row.Gender || row.gender;
         const active = row.Active === 'YES' || row.active === 'yes';
         const statusIcon = active ? '🟢' : '🔴';
+        const bowlerName = (row.Bowler || row.bowler || '').replace(/\s+/g, ' ').trim();
         
         // Calculate average from total score and games
         const totalGames = parseInt(row['Total Games'] || row['total games'] || 0);
@@ -82,7 +83,7 @@ function App() {
         }
         
         return {
-          bowler: `${statusIcon} ${row.Bowler || row.bowler} [${gender}]`,
+          bowler: `${statusIcon} ${bowlerName}[${gender}]`,
           gender,
           active,
           hdcp,
