@@ -77,6 +77,14 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 - `Average` and `Hdcp` are sourced directly from the sheet data and are no longer computed in the app.
 - Ensure the source sheet includes `Average` and `Hdcp` columns (case-insensitive keys are supported).
 
+## URL Parameters
+
+- You can now pass query params to control runtime configuration.
+- Example: `?league=tampines&view=default`
+- `league` selects the configured league data source.
+- If `league` is missing or unknown, it defaults to `dummy` and uses dummy values for all displayed data.
+- `view` is parsed and preserved for view-specific logic (defaults to `default`).
+
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)

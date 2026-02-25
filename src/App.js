@@ -1,10 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
 import TimeAgo from 'react-timeago';
-import { BOWLERS_SHEET_URL, REFRESH_INTERVAL } from './Data';
+import { DUMMY_BOWLERS_DATA, REFRESH_INTERVAL, getAppConfigFromUrl } from './Data';
 import pinfinityLogo from './pinfinity.png';
+import tampinesLogo from './tampines.png';
 import './App.css';
+
+const LOGO_BY_LEAGUE = {
+  pinfinity: pinfinityLogo,
+  tampines: tampinesLogo,
+};
 
 const parseCSV = (csvText) => {
   const lines = csvText.split('\n').filter(line => line.trim());
@@ -53,13 +59,24 @@ const columns = [
 ];
 
 function App() {
+  const appConfig = useMemo(() => getAppConfigFromUrl(window.location.search), []);
+  const logoSrc = LOGO_BY_LEAGUE[appConfig.logo] || pinfinityLogo;
   const [bowlersData, setBowlersData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
 
   const fetchBowlersData = useCallback(async () => {
+    if (appConfig.useDummyData) {
+      setBowlersData(DUMMY_BOWLERS_DATA);
+      const updateTime = new Date();
+      setLastUpdated(updateTime);
+      setLoading(false);
+      console.log(`Dummy bowlers data loaded at: ${updateTime.toLocaleString()}`);
+      return;
+    }
+
     try {
-      const response = await axios.get(BOWLERS_SHEET_URL);
+      const response = await axios.get(appConfig.bowlersSheetUrl);
       const parsedData = parseCSV(response.data);
       const bowlers = parsedData.map(row => {
         const gender = row.Gender || row.gender;
@@ -115,7 +132,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [appConfig.bowlersSheetUrl, appConfig.useDummyData]);
 
   useEffect(() => {
     fetchBowlersData();
@@ -136,8 +153,8 @@ function App() {
       <header className="hero">
         <div className="hero-content">
           <div className="logo-section">
-            <img src={pinfinityLogo} alt="Pinfinity Logo" className="site-logo" />
-            <h1>Pinfinity Tampines Wednesday</h1>
+            <img src={logoSrc} alt={`${appConfig.title} logo`} className="site-logo" />
+            <h1>{appConfig.title}</h1>
           </div>
           <div className="live-badge">
             Last Updated: {lastUpdated ? <TimeAgo date={lastUpdated} /> : 'Loading...'}
