@@ -304,6 +304,11 @@
     justify-content: center;
   }
 
+  .suggestion-wrap {
+    display: flex;
+    justify-content: center;
+  }
+
   .data-table {
     table-layout: fixed;
     min-width: 100%;
