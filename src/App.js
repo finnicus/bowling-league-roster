@@ -169,7 +169,7 @@ function BowlersTable({ data }) {
   return (
     <>
       {/* DESKTOP: Simple Table with Grid Lines */}
-      <div className="table-container desktop">
+      <div className="table-container">
         <table className="data-table">
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
@@ -196,21 +196,6 @@ function BowlersTable({ data }) {
             ))}
           </tbody>
         </table>
-      </div>
-
-      {/* MOBILE: Card List Fallback */}
-      <div className="mobile-cards">
-        {data.map((bowler, index) => (
-          <div className="mobile-card" key={`${bowler.bowler}-${index}`}>
-            <div className="mobile-card-name">{bowler.bowler}</div>
-            <div className="mobile-card-stats">
-              <div className="mobile-stat-row"><span>Handicap</span><strong>{bowler.hdcp}</strong></div>
-              <div className="mobile-stat-row"><span>Total Games</span><strong>{bowler.totalGames.toLocaleString()}</strong></div>
-              <div className="mobile-stat-row"><span>Total Score</span><strong>{bowler.totalScore.toLocaleString()}</strong></div>
-              <div className="mobile-stat-row"><span>Average</span><strong>{bowler.average}</strong></div>
-            </div>
-          </div>
-        ))}
       </div>
 
     </>

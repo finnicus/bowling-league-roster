@@ -71,52 +71,8 @@
   overflow-x: auto;
 }
 
-.mobile-cards {
-  display: none;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto 20px auto;
-  padding: 0 20px;
-  box-sizing: border-box;
-}
-
-.mobile-card {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background: #fff;
-  padding: 10px;
-  margin-bottom: 10px;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-.mobile-card-name {
-  font-weight: 700;
-  margin-bottom: 6px;
-  word-break: break-word;
-}
-
-.mobile-card-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-}
-
-.mobile-stat-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.mobile-stat-row span {
-  color: #333;
-}
-
 .data-table {
   width: 100%;
-  min-width: 560px;
   border-collapse: collapse;
   font-size: 13px;
   background-color: white;
@@ -169,13 +125,48 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .table-container.desktop {
-    display: none;
+  .table-container {
+    padding: 0 8px;
   }
 
-  .mobile-cards {
-    display: block;
-    padding: 0 12px;
+  .data-table {
+    table-layout: fixed;
+    min-width: 100%;
+    font-size: 11px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 3px 4px;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .data-table th {
+    font-size: 11px;
+    line-height: 1.15;
+  }
+
+  .data-table td {
+    font-size: 11px;
+    line-height: 1.15;
+  }
+
+  .data-table th:nth-child(1),
+  .data-table td:nth-child(1) {
+    width: 40%;
+  }
+
+  .data-table th:nth-child(2),
+  .data-table td:nth-child(2),
+  .data-table th:nth-child(3),
+  .data-table td:nth-child(3),
+  .data-table th:nth-child(4),
+  .data-table td:nth-child(4),
+  .data-table th:nth-child(5),
+  .data-table td:nth-child(5) {
+    width: 15%;
+    text-align: center;
   }
 
   .hero {
@@ -201,21 +192,5 @@
 
   .site-logo {
     height: 64px;
-  }
-
-  .table-container {
-    padding: 0 12px;
-  }
-
-  .mobile-card {
-    padding: 8px;
-  }
-
-  .mobile-card-name {
-    font-size: 14px;
-  }
-
-  .mobile-card-stats {
-    font-size: 12px;
   }
 }
