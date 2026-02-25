@@ -4,9 +4,9 @@ import { fetchAppConfigFromURL, getAppConfigFromURL } from './Api';
 import Summary from './Summary';
 import Roster from './Roster';
 import Suggestion from './Suggestion';
-import pinfinityLogo from './pinfinity.png';
+import pinfinityLogo from './tessenjohn.png';
 import tampinesLogo from './tampines.png';
-import pinpalsLogo from './pinpals.png';
+import pinpalsLogo from './sgcc.png';
 import genericLogo from './generic.png';
 import './App.css';
 
