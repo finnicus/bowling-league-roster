@@ -1,9 +1,10 @@
+import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import App from './App';
-import { fetchAppConfigFromURL, fetchData, fetchRosterData, fetchSettingsData, getAppConfigFromURL } from './Api';
+import App from '../js/App';
+import { fetchAppConfigFromURL, fetchData, fetchRosterData, fetchSettingsData, getAppConfigFromURL } from '../js/Api';
 
-jest.mock('./Api', () => ({
-  ...jest.requireActual('./Api'),
+jest.mock('../js/Api', () => ({
+  ...jest.requireActual('../js/Api'),
   fetchData: jest.fn(),
   fetchRosterData: jest.fn(),
   fetchSettingsData: jest.fn(),

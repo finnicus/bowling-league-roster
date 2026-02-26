@@ -4,11 +4,11 @@ import { fetchAppConfigFromURL, getAppConfigFromURL } from './Api';
 import Summary from './Summary';
 import Roster from './Roster';
 import Suggestion from './Suggestion';
-import tessenjohnLogo from './tessenjohn.png';
-import tampinesLogo from './tampines.png';
-import sgccLogo from './sgcc.png';
-import genericLogo from './generic.png';
-import './App.css';
+import tessenjohnLogo from '../logo/tessensohn.png';
+import tampinesLogo from '../logo/tampines.png';
+import sgccLogo from '../logo/sgcc.png';
+import genericLogo from '../logo/generic.png';
+import '../css/App.css';
 
 const LOGO_BY_LEAGUE = {
   tessenjohn : tessenjohnLogo,

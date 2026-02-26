@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { fetchData } from './Api';
+import { fetchData } from '../js/Api';
 
 jest.mock('axios');
 
