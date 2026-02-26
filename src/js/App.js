@@ -4,16 +4,18 @@ import { fetchAppConfigFromURL, getAppConfigFromURL } from './Api';
 import Summary from './Summary';
 import Roster from './Roster';
 import Suggestion from './Suggestion';
-import tessenjohnLogo from '../logo/tessensohn.png';
-import tampinesLogo from '../logo/tampines.png';
-import sgccLogo from '../logo/sgcc.png';
 import genericLogo from '../logo/generic.png';
 import '../css/App.css';
 
-const LOGO_BY_LEAGUE = {
-  tessenjohn : tessenjohnLogo,
-  tampines: tampinesLogo,
-  sgcc: sgccLogo,
+const getLogoSrc = (logoName) => {
+  const normalizedLogo = String(logoName || '').trim().toLowerCase();
+  if (!normalizedLogo) return genericLogo;
+
+  try {
+    return require(`../logo/${normalizedLogo}.png`);
+  } catch {
+    return genericLogo;
+  }
 };
 
 const setDocumentIcon = (href, rel) => {
@@ -29,7 +31,7 @@ const setDocumentIcon = (href, rel) => {
 function App() {
   const initialConfig = useMemo(() => getAppConfigFromURL(window.location.search), []);
   const [appConfig, setAppConfig] = useState(initialConfig);
-  const logoSrc = LOGO_BY_LEAGUE[appConfig.logo] || genericLogo;
+  const logoSrc = useMemo(() => getLogoSrc(appConfig.logo || appConfig.league), [appConfig.logo, appConfig.league]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
 
