@@ -5,6 +5,7 @@ const MASTER_WORKBOOK = '2PACX-1vQLJDJ0tRftkDJQ8v0DO35q6Kymvp2GmdMwfeP8r6GuHcEAL
 const BOWLERS_SHEET = '1560652729';
 const ROSTERS_SHEET = '2108495623';
 const SETTINGS_SHEET = '1970364122';
+const EXCEPTIONS_SHEET = '1745318736';
 
 const DUMMY_LEAGUE = {
   title: 'Generic League',
@@ -22,6 +23,7 @@ const buildDataSheetUrl = (gid) => (
 const BOWLERS_SHEET_URL = buildDataSheetUrl(BOWLERS_SHEET);
 const ROSTERS_SHEET_URL = buildDataSheetUrl(ROSTERS_SHEET);
 const SETTINGS_SHEET_URL = buildDataSheetUrl(SETTINGS_SHEET);
+const EXCEPTIONS_SHEET_URL = buildDataSheetUrl(EXCEPTIONS_SHEET);
 
 const DUMMY_BOWLERS_DATA = [
   {
@@ -267,6 +269,68 @@ const parseRosterDate = (value) => {
   if (month === undefined || Number.isNaN(day) || Number.isNaN(year)) return null;
 
   return new Date(Date.UTC(year, month, day));
+};
+
+const normalizeSeason = (value) => String(value || '').trim().toLowerCase();
+
+const parseExceptionBowlers = (row) => {
+  const rawValue = [
+    row.Bowlers,
+    row.bowlers,
+    row.Bowler,
+    row.bowler,
+    row.Names,
+    row.names,
+    row.Name,
+    row.name,
+    row.Exception,
+    row.exception,
+  ].find((value) => String(value || '').trim());
+
+  if (!rawValue) return [];
+
+  return String(rawValue)
+    .split(/[\n,;|]/)
+    .map((name) => String(name || '').replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+};
+
+export const fetchExceptionsData = async (config, season = '') => {
+  const response = await axios.get(config.exceptionsSheetUrl || EXCEPTIONS_SHEET_URL);
+  const parsedData = parseCSV(response.data);
+  const targetLeague = String(config.league || '').trim().toLowerCase();
+  const targetSeason = normalizeSeason(season);
+
+  const data = parsedData
+    .filter((row) => {
+      const rowLeague = String(row.League || row.league || '').trim().toLowerCase();
+      if (rowLeague !== targetLeague) return false;
+
+      if (!targetSeason) return true;
+      const rowSeason = normalizeSeason(row.Season || row.season || '');
+      return rowSeason === targetSeason;
+    })
+    .map((row) => {
+      const date = String(row.Date || row.date || '').trim();
+      const parsedDate = parseRosterDate(date);
+      const bowlers = parseExceptionBowlers(row);
+
+      return {
+        league: String(row.League || row.league || '').trim(),
+        season: String(row.Season || row.season || '').trim(),
+        date,
+        parsedDate,
+        bowlers,
+      };
+    })
+    .filter((row) => row.parsedDate && row.bowlers.length > 0)
+    .sort((a, b) => a.parsedDate - b.parsedDate);
+
+  return {
+    data,
+    updatedAt: new Date(),
+    source: 'csv',
+  };
 };
 
 export const fetchRosterData = async (config) => {

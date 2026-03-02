@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { fetchData, fetchRosterData } from './Api';
+import { fetchData, fetchExceptionsData, fetchRosterData, fetchSettingsData } from './Api';
 
 const SG_TIME_ZONE = 'Asia/Singapore';
 
@@ -19,6 +19,15 @@ const MONTH_INDEX = {
 };
 
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const toDateKey = (date) => {
+  if (!date) return '';
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, '0'),
+    String(date.getUTCDate()).padStart(2, '0'),
+  ].join('-');
+};
 
 const getSingaporeTodayUtc = () => {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -53,12 +62,48 @@ function Roster({ appConfig }) {
 
     const loadRosterData = async () => {
       try {
-        const [{ data }, { data: bowlersData }] = await Promise.all([
+        const [{ data }, { data: bowlersData }, { data: settingsData }] = await Promise.all([
           fetchRosterData(appConfig),
           fetchData(appConfig),
+          fetchSettingsData(appConfig),
         ]);
+
+        const { data: exceptionsData } = await fetchExceptionsData(appConfig, settingsData?.season || '');
+
         if (!isCancelled) {
-          setRosterRows(data);
+          const exceptionsByDate = exceptionsData.reduce((acc, row) => {
+            const key = toDateKey(row.parsedDate);
+            if (!key) return acc;
+
+            acc[key] = [...(acc[key] || []), ...row.bowlers];
+            return acc;
+          }, {});
+
+          const rosterWithExceptions = data.map((row) => {
+            const key = toDateKey(row.parsedDate);
+            const exceptionNames = exceptionsByDate[key] || [];
+            const existingNames = new Set(
+              (row.bowlers || []).map((entry) => normalizeBowlerName(entry.name).toLowerCase()).filter(Boolean)
+            );
+
+            const appendedExceptions = exceptionNames
+              .map((name) => normalizeBowlerName(name))
+              .filter((name) => name)
+              .filter((name) => !existingNames.has(name.toLowerCase()))
+              .map((name) => ({
+                name,
+                status: 'EXCEPTION',
+                isReserve: false,
+                isException: true,
+              }));
+
+            return {
+              ...row,
+              bowlers: [...(row.bowlers || []), ...appendedExceptions],
+            };
+          });
+
+          setRosterRows(rosterWithExceptions);
           const statsMap = bowlersData.reduce((acc, bowler) => {
             const key = normalizeBowlerName(bowler.bowler).toLowerCase();
             if (!key) return acc;
@@ -126,15 +171,22 @@ function Roster({ appConfig }) {
                   const displayName = entry.isReserve
                     ? `${entry.name} (Reserve)`
                     : entry.name;
-                  const isConfirmed = String(entry.status || '').trim().toUpperCase() === 'YES';
-                  const statusIcon = isConfirmed ? '✅' : '?';
-                  const statusClassName = isConfirmed ? 'status-confirmed' : 'status-pending';
+                  const statusText = String(entry.status || '').trim().toUpperCase();
+                  const isException = entry.isException || statusText === 'EXCEPTION';
+                  const isConfirmed = statusText === 'YES';
+                  const statusIcon = isException ? '❌' : (isConfirmed ? '✅' : '?');
+                  const statusClassName = isException
+                    ? 'status-exception'
+                    : (isConfirmed ? 'status-confirmed' : 'status-pending');
+                  const statusAriaLabel = isException
+                    ? 'exception'
+                    : (isConfirmed ? 'confirmed' : 'pending response');
 
                   return (
                     <tr className="roster-item" key={`${card.date}-${entry.name}-${entry.isReserve ? 'reserve' : 'main'}`}>
                       <td className="roster-item-name">{displayName}</td>
                       <td className="roster-item-hdcp"><span className="roster-hdcp-badge">H {stats.hdcp}</span></td>
-                      <td className={`roster-item-status ${statusClassName}`} aria-label={isConfirmed ? 'confirmed' : 'pending response'}>
+                      <td className={`roster-item-status ${statusClassName}`} aria-label={statusAriaLabel}>
                         <span className={`roster-status-icon ${statusClassName}`}>{statusIcon}</span>
                       </td>
                     </tr>

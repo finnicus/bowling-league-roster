@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { fetchRosterData, fetchSettingsData } from '../js/Api';
+import { fetchExceptionsData, fetchRosterData, fetchSettingsData } from '../js/Api';
 
 jest.mock('axios');
 
@@ -65,6 +65,42 @@ describe('fetchRosterData', () => {
     expect(result.data[1].slots.Reserved).toMatchObject({
       name: 'ReserveOne',
       isReserve: true,
+    });
+  });
+});
+
+describe('fetchExceptionsData', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('filters by league and season and parses exception bowlers by date', async () => {
+    axios.get.mockResolvedValue({
+      data: [
+        'League,Season,Date,Bowlers',
+        'sgcc,2026,15/Jan/2026,"Alice, Bob"',
+        'sgcc,2025,15/Jan/2026,WrongSeason',
+        'tampines,2026,15/Jan/2026,WrongLeague',
+        'sgcc,2026,invalid-date,InvalidDate',
+      ].join('\n'),
+    });
+
+    const result = await fetchExceptionsData(
+      {
+        league: 'sgcc',
+        exceptionsSheetUrl: 'https://example.com/exceptions.csv',
+      },
+      '2026'
+    );
+
+    expect(result.source).toBe('csv');
+    expect(result.updatedAt).toBeInstanceOf(Date);
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0]).toMatchObject({
+      league: 'sgcc',
+      season: '2026',
+      date: '15/Jan/2026',
+      bowlers: ['Alice', 'Bob'],
     });
   });
 });
