@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { fetchData, fetchExceptionsData, fetchRosterData, fetchSettingsData } from './Api';
 
 const SG_TIME_ZONE = 'Asia/Singapore';
+const MAIN_PLAYERS_REQUIRED = 3;
 
 const MONTH_INDEX = {
   jan: 0,
@@ -48,6 +49,7 @@ const getSingaporeTodayUtc = () => {
 function Roster({ appConfig }) {
   const [rosterRows, setRosterRows] = useState([]);
   const [bowlerStatsByName, setBowlerStatsByName] = useState({});
+  const [activeBowlers, setActiveBowlers] = useState([]);
 
   const normalizeBowlerName = (name) => (
     String(name || '')
@@ -132,7 +134,18 @@ function Roster({ appConfig }) {
             };
             return acc;
           }, {});
+
+          const normalizedActiveBowlers = bowlersData
+            .filter((bowler) => bowler.active !== false)
+            .map((bowler) => ({
+              name: normalizeBowlerName(bowler.bowler),
+              totalGames: Number(bowler.totalGames) || 0,
+              average: Number(bowler.average) || 0,
+            }))
+            .filter((bowler) => bowler.name);
+
           setBowlerStatsByName(statsMap);
+          setActiveBowlers(normalizedActiveBowlers);
         }
       } catch (error) {
         console.error('Error fetching roster:', error);
@@ -167,17 +180,34 @@ function Roster({ appConfig }) {
     }
   );
 
-  const sortByStats = (entryA, entryB) => {
-    const statsA = getEntryStats(entryA);
-    const statsB = getEntryStats(entryB);
+  const sortByName = (entryA, entryB) => normalizeBowlerName(entryA.name).localeCompare(normalizeBowlerName(entryB.name));
 
-    const hdcpDiff = statsB.hdcp - statsA.hdcp;
-    if (hdcpDiff !== 0) return hdcpDiff;
+  const pickSuggestedMainBowlers = (card, missingCount) => {
+    if (missingCount <= 0) return [];
 
-    const averageDiff = statsA.average - statsB.average;
-    if (averageDiff !== 0) return averageDiff;
+    const unavailableNames = new Set(
+      (card.bowlers || [])
+        .map((entry) => normalizeBowlerName(entry.name).toLowerCase())
+        .filter(Boolean)
+    );
 
-    return statsB.totalGames - statsA.totalGames;
+    const candidates = activeBowlers
+      .filter((bowler) => !unavailableNames.has(bowler.name.toLowerCase()))
+      .sort((entryA, entryB) => {
+        const gamesDiff = entryA.totalGames - entryB.totalGames;
+        if (gamesDiff !== 0) return gamesDiff;
+
+        const averageDiff = entryA.average - entryB.average;
+        if (averageDiff !== 0) return averageDiff;
+
+        return entryA.name.localeCompare(entryB.name);
+      });
+
+    return candidates.slice(0, missingCount).map((bowler) => ({
+      ...bowler,
+      isSuggestion: true,
+      status: 'SUGGESTED',
+    }));
   };
 
   return (
@@ -190,19 +220,35 @@ function Roster({ appConfig }) {
             <table className="roster-bowlers-table" aria-label={`Bowlers for ${card.date}`}>
               <tbody>
               {(() => {
-                const normalEntries = [...card.bowlers]
-                  .filter((entry) => !entry.isReserve && !entry.isException)
-                  .sort(sortByStats);
+                const confirmedEntries = [...card.bowlers]
+                  .filter((entry) => {
+                    if (entry.isReserve || entry.isException) return false;
+                    const statusText = String(entry.status || '').trim().toUpperCase();
+                    return statusText === 'YES';
+                  })
+                  .sort(sortByName);
+                const pendingEntries = [...card.bowlers]
+                  .filter((entry) => {
+                    if (entry.isReserve || entry.isException) return false;
+                    const statusText = String(entry.status || '').trim().toUpperCase();
+                    return statusText !== 'YES';
+                  })
+                  .sort(sortByName);
                 const reserveEntries = [...card.bowlers]
                   .filter((entry) => entry.isReserve)
-                  .sort(sortByStats);
+                  .sort(sortByName);
                 const exceptionEntries = [...card.bowlers]
                   .filter((entry) => entry.isException || String(entry.status || '').trim().toUpperCase() === 'EXCEPTION')
-                  .sort((entryA, entryB) => normalizeBowlerName(entryA.name).localeCompare(normalizeBowlerName(entryB.name)));
+                  .sort(sortByName);
+
+                const missingMainCount = Math.max(MAIN_PLAYERS_REQUIRED - (confirmedEntries.length + pendingEntries.length), 0);
+                const suggestionEntries = pickSuggestedMainBowlers(card, missingMainCount).sort(sortByName);
 
                 const orderedEntries = [
-                  ...normalEntries,
+                  ...confirmedEntries,
+                  ...pendingEntries,
                   ...reserveEntries,
+                  ...suggestionEntries,
                   ...(exceptionEntries.length > 0 ? [{ isExceptionLabel: true, key: `${card.date}-exceptions-label` }] : []),
                   ...exceptionEntries,
                 ];
@@ -219,17 +265,18 @@ function Roster({ appConfig }) {
                   const stats = bowlerStatsByName[normalizeBowlerName(entry.name).toLowerCase()] || { hdcp: '-' };
                   const displayName = entry.isReserve
                     ? `${entry.name} (Reserve)`
-                    : entry.name;
+                    : (entry.isSuggestion ? `💡 ${entry.name}` : entry.name);
                   const statusText = String(entry.status || '').trim().toUpperCase();
                   const isException = entry.isException || statusText === 'EXCEPTION';
+                  const isSuggestion = statusText === 'SUGGESTED' || entry.isSuggestion;
                   const isConfirmed = statusText === 'YES';
-                  const statusIcon = isException ? '' : (isConfirmed ? '✅' : '?');
+                  const statusIcon = isException ? '' : (isSuggestion ? '💡' : (isConfirmed ? '✅' : '?'));
                   const statusClassName = isException
                     ? 'status-exception'
                     : (isConfirmed ? 'status-confirmed' : 'status-pending');
                   const statusAriaLabel = isException
                     ? undefined
-                    : (isConfirmed ? 'confirmed' : 'pending response');
+                    : (isSuggestion ? 'suggested' : (isConfirmed ? 'confirmed' : 'pending response'));
 
                   return (
                     <tr className="roster-item" key={`${card.date}-${entry.name}-${entry.isReserve ? 'reserve' : 'main'}-${entryIndex}`}>

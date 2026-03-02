@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { fetchData, fetchRosterData, fetchSettingsData } from './Api';
+import { fetchData, fetchExceptionsData, fetchRosterData, fetchSettingsData } from './Api';
 
 const SG_TIME_ZONE = 'Asia/Singapore';
 const SLOT_ORDER = ['A', 'B', 'C', 'Reserved'];
+const MAIN_SLOT_ORDER = ['A', 'B', 'C'];
 const GROUP_A_NAMES = new Set(['dan', 'bernard', 'jacob', 'daniel']);
 const WILLIAM_NAME = 'william';
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -31,6 +32,19 @@ const normalizeName = (name) => (
 );
 
 const monthKeyForDate = (date) => `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}`;
+
+const toDateKey = (date) => {
+  if (!date) return '';
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, '0'),
+    String(date.getUTCDate()).padStart(2, '0'),
+  ].join('-');
+};
+
+const getParticipationCount = (match) => (
+  (match?.bowlers || []).filter((entry) => !entry.isReserve).length
+);
 
 const pickLeastGames = (candidates) => {
   if (!candidates || candidates.length === 0) return null;
@@ -69,6 +83,14 @@ function Suggestion({ appConfig }) {
         setSettings(settingsData);
         setRosterRows(rosterData);
 
+        let exceptionsData = [];
+        try {
+          const exceptionsResult = await fetchExceptionsData(appConfig, settingsData?.season || '');
+          exceptionsData = exceptionsResult?.data || [];
+        } catch (error) {
+          console.warn('Error fetching exceptions data:', error);
+        }
+
         const additionalGamesByName = rosterData.reduce((acc, match) => {
           const slots = [match?.slots?.A, match?.slots?.B, match?.slots?.C];
           slots.forEach((slot) => {
@@ -81,12 +103,65 @@ function Suggestion({ appConfig }) {
         }, {});
 
         const today = getSingaporeTodayUtc();
-        const upcoming = rosterData.filter((match) => match.parsedDate >= today);
+        const upcoming = rosterData
+          .filter((match) => match.parsedDate >= today)
+          .sort((a, b) => a.parsedDate - b.parsedDate);
 
-        const nextFullyUnassigned = upcoming.find((match) => (
-          SLOT_ORDER.every((slot) => !normalizeName(match.slots?.[slot]?.name))
-        ));
-        setNextMatch(nextFullyUnassigned || null);
+        const exceptionsByDate = exceptionsData.reduce((acc, row) => {
+          const key = toDateKey(row.parsedDate);
+          if (!key) return acc;
+
+          acc[key] = [...(acc[key] || []), ...row.bowlers];
+          return acc;
+        }, {});
+
+        const upcomingAsRosterCards = upcoming.map((match, upcomingIndex) => {
+          const key = toDateKey(match.parsedDate);
+          const exceptionNames = exceptionsByDate[key] || [];
+          const baseBowlers = Array.isArray(match.bowlers)
+            ? match.bowlers
+            : Object.values(match.slots || {})
+              .filter((entry) => normalizeName(entry?.name))
+              .map((entry) => ({
+                slot: entry.slot,
+                name: normalizeName(entry.name),
+                status: entry.status,
+                isReserve: Boolean(entry.isReserve),
+              }));
+          const existingNames = new Set(
+            baseBowlers.map((entry) => normalizeName(entry.name).toLowerCase()).filter(Boolean)
+          );
+
+          const appendedExceptions = exceptionNames
+            .map((name) => normalizeName(name))
+            .filter((name) => name)
+            .filter((name) => !existingNames.has(name.toLowerCase()))
+            .map((name) => ({
+              name,
+              status: 'EXCEPTION',
+              isReserve: false,
+              isException: true,
+            }));
+
+          return {
+            ...match,
+            upcomingIndex,
+            bowlers: [...baseBowlers, ...appendedExceptions],
+          };
+        });
+
+        const rosterCards = upcomingAsRosterCards.filter((match) => getParticipationCount(match) > 0);
+        const lastRosterCard = rosterCards.length > 0 ? rosterCards[rosterCards.length - 1] : null;
+
+        const mainBowlerCountInLastRosterCard = lastRosterCard
+          ? (lastRosterCard.bowlers || []).filter((entry) => !entry.isReserve && !entry.isException).length
+          : 0;
+
+        if (!lastRosterCard || mainBowlerCountInLastRosterCard < 3) {
+          setNextMatch(null);
+        } else {
+          setNextMatch(upcoming[lastRosterCard.upcomingIndex + 1] || null);
+        }
 
         const activeBowlers = bowlersData
           .filter((bowler) => bowler.active)
@@ -126,7 +201,10 @@ function Suggestion({ appConfig }) {
     if (!settings || !nextMatch) return [];
 
     const monthKey = monthKeyForDate(nextMatch.parsedDate);
-    const williamMonthlyAssigned = Object.values(nextMatch.slots || {}).filter((slot) => normalizeName(slot.name).toLowerCase() === WILLIAM_NAME).length;
+    const williamMonthlyAssigned = MAIN_SLOT_ORDER
+      .map((slotKey) => nextMatch.slots?.[slotKey])
+      .filter((slot) => normalizeName(slot?.name).toLowerCase() === WILLIAM_NAME)
+      .length;
     let williamMonthlyGenerated = 0;
 
     const alreadyChosen = new Set(
@@ -143,7 +221,7 @@ function Suggestion({ appConfig }) {
     });
 
     const williamExistingGamesInMonth = existingRosterForMonth.reduce((count, match) => {
-      const entries = Object.values(match.slots || {});
+      const entries = MAIN_SLOT_ORDER.map((slotKey) => match.slots?.[slotKey]);
       return count + entries.filter((entry) => normalizeName(entry.name).toLowerCase() === WILLIAM_NAME).length;
     }, 0);
 
