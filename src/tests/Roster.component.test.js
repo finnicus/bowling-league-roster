@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
+import { within } from '@testing-library/dom';
 import Roster from '../js/Roster';
 import { fetchData, fetchExceptionsData, fetchRosterData, fetchSettingsData } from '../js/Api';
 
@@ -52,7 +53,7 @@ describe('Roster', () => {
       data: [
         {
           parsedDate: futureDate,
-          bowlers: ['Charlie'],
+          bowlers: ['Charlie', 'Aaron'],
         },
       ],
     });
@@ -67,13 +68,20 @@ describe('Roster', () => {
     expect(fetchData).toHaveBeenCalledWith(appConfig);
     expect(fetchSettingsData).toHaveBeenCalledWith(appConfig);
     expect(fetchExceptionsData).toHaveBeenCalledWith(appConfig, '2026');
+    expect(screen.getByText('❌ Unable to Play')).toBeInTheDocument();
+    expect(screen.getByText('Aaron')).toBeInTheDocument();
     expect(screen.getByText('Alice')).toBeInTheDocument();
     expect(screen.getByText('Charlie')).toBeInTheDocument();
     expect(screen.getByText('Bob (Reserve)')).toBeInTheDocument();
     expect(screen.getByText('H 10')).toBeInTheDocument();
     expect(screen.getByLabelText('confirmed')).toBeInTheDocument();
     expect(screen.getByLabelText('pending response')).toBeInTheDocument();
-    expect(screen.getByLabelText('exception')).toBeInTheDocument();
+    expect(screen.queryByLabelText('exception')).not.toBeInTheDocument();
+
+    const table = screen.getByRole('table', { name: 'Bowlers for 01/Jan/2099' });
+    const nameCells = Array.from(table.querySelectorAll('td.roster-item-name')).map((cell) => cell.textContent);
+    expect(nameCells).toEqual(['Alice', 'Bob (Reserve)', 'Aaron', 'Charlie']);
+    expect(within(table).getByText('Bob (Reserve)').closest('tr').nextElementSibling).toHaveClass('roster-item-exceptions-label');
   });
 
   test('handles roster fetch failure without crashing', async () => {

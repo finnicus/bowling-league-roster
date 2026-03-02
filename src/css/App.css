@@ -162,6 +162,15 @@
   padding: 2px 0;
 }
 
+.roster-item-exceptions-label .roster-exceptions-label-cell {
+  padding: 6px 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  font-style: italic;
+  text-align: left;
+  color: #c62828;
+}
+
 .roster-item-name {
   text-align: left;
   padding-right: 4px;

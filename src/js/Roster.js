@@ -62,13 +62,31 @@ function Roster({ appConfig }) {
 
     const loadRosterData = async () => {
       try {
-        const [{ data }, { data: bowlersData }, { data: settingsData }] = await Promise.all([
+        const [rosterResult, bowlersResult, settingsResult] = await Promise.allSettled([
           fetchRosterData(appConfig),
           fetchData(appConfig),
           fetchSettingsData(appConfig),
         ]);
 
-        const { data: exceptionsData } = await fetchExceptionsData(appConfig, settingsData?.season || '');
+        if (rosterResult.status !== 'fulfilled') {
+          throw rosterResult.reason;
+        }
+
+        const data = rosterResult.value?.data || [];
+        const bowlersData = bowlersResult.status === 'fulfilled'
+          ? (bowlersResult.value?.data || [])
+          : [];
+        const settingsData = settingsResult.status === 'fulfilled'
+          ? (settingsResult.value?.data || null)
+          : null;
+
+        let exceptionsData = [];
+        try {
+          const exceptionsResult = await fetchExceptionsData(appConfig, settingsData?.season || '');
+          exceptionsData = exceptionsResult?.data || [];
+        } catch (error) {
+          console.warn('Error fetching exceptions data:', error);
+        }
 
         if (!isCancelled) {
           const exceptionsByDate = exceptionsData.reduce((acc, row) => {
@@ -141,6 +159,27 @@ function Roster({ appConfig }) {
     return `${day}/${month}/${year}`;
   };
 
+  const getEntryStats = (entry) => (
+    bowlerStatsByName[normalizeBowlerName(entry.name).toLowerCase()] || {
+      hdcp: -1,
+      average: Number.MAX_SAFE_INTEGER,
+      totalGames: -1,
+    }
+  );
+
+  const sortByStats = (entryA, entryB) => {
+    const statsA = getEntryStats(entryA);
+    const statsB = getEntryStats(entryB);
+
+    const hdcpDiff = statsB.hdcp - statsA.hdcp;
+    if (hdcpDiff !== 0) return hdcpDiff;
+
+    const averageDiff = statsA.average - statsB.average;
+    if (averageDiff !== 0) return averageDiff;
+
+    return statsB.totalGames - statsA.totalGames;
+  };
+
   return (
     <section className="roster-container">
       <div className="roster-grid">
@@ -150,23 +189,33 @@ function Roster({ appConfig }) {
             <p className="roster-opponent"><strong>Team: {card.opponent || 'TBD'}</strong></p>
             <table className="roster-bowlers-table" aria-label={`Bowlers for ${card.date}`}>
               <tbody>
-              {[...card.bowlers]
-                .sort((entryA, entryB) => {
-                  if (entryA.isReserve && !entryB.isReserve) return 1;
-                  if (!entryA.isReserve && entryB.isReserve) return -1;
+              {(() => {
+                const normalEntries = [...card.bowlers]
+                  .filter((entry) => !entry.isReserve && !entry.isException)
+                  .sort(sortByStats);
+                const reserveEntries = [...card.bowlers]
+                  .filter((entry) => entry.isReserve)
+                  .sort(sortByStats);
+                const exceptionEntries = [...card.bowlers]
+                  .filter((entry) => entry.isException || String(entry.status || '').trim().toUpperCase() === 'EXCEPTION')
+                  .sort((entryA, entryB) => normalizeBowlerName(entryA.name).localeCompare(normalizeBowlerName(entryB.name)));
 
-                  const statsA = bowlerStatsByName[normalizeBowlerName(entryA.name).toLowerCase()] || { hdcp: -1, average: Number.MAX_SAFE_INTEGER, totalGames: -1 };
-                  const statsB = bowlerStatsByName[normalizeBowlerName(entryB.name).toLowerCase()] || { hdcp: -1, average: Number.MAX_SAFE_INTEGER, totalGames: -1 };
+                const orderedEntries = [
+                  ...normalEntries,
+                  ...reserveEntries,
+                  ...(exceptionEntries.length > 0 ? [{ isExceptionLabel: true, key: `${card.date}-exceptions-label` }] : []),
+                  ...exceptionEntries,
+                ];
 
-                  const hdcpDiff = statsB.hdcp - statsA.hdcp;
-                  if (hdcpDiff !== 0) return hdcpDiff;
+                return orderedEntries.map((entry, entryIndex) => {
+                  if (entry.isExceptionLabel) {
+                    return (
+                      <tr className="roster-item roster-item-exceptions-label" key={entry.key}>
+                        <td colSpan={3} className="roster-exceptions-label-cell">❌ Unable to Play</td>
+                      </tr>
+                    );
+                  }
 
-                  const averageDiff = statsA.average - statsB.average;
-                  if (averageDiff !== 0) return averageDiff;
-
-                  return statsB.totalGames - statsA.totalGames;
-                })
-                .map((entry) => {
                   const stats = bowlerStatsByName[normalizeBowlerName(entry.name).toLowerCase()] || { hdcp: '-' };
                   const displayName = entry.isReserve
                     ? `${entry.name} (Reserve)`
@@ -174,24 +223,25 @@ function Roster({ appConfig }) {
                   const statusText = String(entry.status || '').trim().toUpperCase();
                   const isException = entry.isException || statusText === 'EXCEPTION';
                   const isConfirmed = statusText === 'YES';
-                  const statusIcon = isException ? '❌' : (isConfirmed ? '✅' : '?');
+                  const statusIcon = isException ? '' : (isConfirmed ? '✅' : '?');
                   const statusClassName = isException
                     ? 'status-exception'
                     : (isConfirmed ? 'status-confirmed' : 'status-pending');
                   const statusAriaLabel = isException
-                    ? 'exception'
+                    ? undefined
                     : (isConfirmed ? 'confirmed' : 'pending response');
 
                   return (
-                    <tr className="roster-item" key={`${card.date}-${entry.name}-${entry.isReserve ? 'reserve' : 'main'}`}>
+                    <tr className="roster-item" key={`${card.date}-${entry.name}-${entry.isReserve ? 'reserve' : 'main'}-${entryIndex}`}>
                       <td className="roster-item-name">{displayName}</td>
                       <td className="roster-item-hdcp"><span className="roster-hdcp-badge">H {stats.hdcp}</span></td>
                       <td className={`roster-item-status ${statusClassName}`} aria-label={statusAriaLabel}>
-                        <span className={`roster-status-icon ${statusClassName}`}>{statusIcon}</span>
+                        {!isException && <span className={`roster-status-icon ${statusClassName}`}>{statusIcon}</span>}
                       </td>
                     </tr>
                   );
-                })}
+                });
+              })()}
               </tbody>
             </table>
           </article>
