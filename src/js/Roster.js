@@ -186,6 +186,30 @@ function Roster({ appConfig }) {
 
   const sortByName = (entryA, entryB) => normalizeBowlerName(entryA.name).localeCompare(normalizeBowlerName(entryB.name));
 
+  const getEntryStats = (entry) => (
+    bowlerStatsByName[normalizeBowlerName(entry.name).toLowerCase()] || {
+      hdcp: -1,
+      average: Number.MAX_SAFE_INTEGER,
+      totalGames: Number.MAX_SAFE_INTEGER,
+    }
+  );
+
+  const sortConfirmedByRules = (entryA, entryB) => {
+    const statsA = getEntryStats(entryA);
+    const statsB = getEntryStats(entryB);
+
+    const hdcpDiff = statsB.hdcp - statsA.hdcp;
+    if (hdcpDiff !== 0) return hdcpDiff;
+
+    const gamesDiff = statsA.totalGames - statsB.totalGames;
+    if (gamesDiff !== 0) return gamesDiff;
+
+    const averageDiff = statsA.average - statsB.average;
+    if (averageDiff !== 0) return averageDiff;
+
+    return sortByName(entryA, entryB);
+  };
+
   /**
    * Suggestion candidate ranking (simple fairness model):
    * 1) Fewer total games first
@@ -227,14 +251,19 @@ function Roster({ appConfig }) {
 
   /**
    * Roster display order algorithm (business rule):
-   * 1) Confirmed main bowlers (alphabetical)
+    * 1) Confirmed main bowlers (special ranking below)
    * 2) Pending main bowlers (alphabetical)
    * 3) Reserve bowlers
    * 4) System suggestions to fill missing main spots (alphabetical)
    * 5) Exception bowlers (alphabetical), with a visible section label
    *
+    * Confirmed ranking rule:
+    * - Lower handicap appears lower on the list.
+    * - If handicap ties, higher games played appears lower.
+    * - If handicap and games tie, higher average appears lower.
+    *
    * Plain-language summary:
-   * - People who said "yes" appear first.
+    * - People who said "yes" appear first, but are ranked by handicap/games/average.
    * - People still pending appear next.
    * - Reserves come after the main group.
    * - If the main group has fewer than 3 players, we add suggested names.
@@ -245,7 +274,7 @@ function Roster({ appConfig }) {
 
     const confirmedEntries = allEntries
       .filter(isConfirmedMainEntry)
-      .sort(sortByName);
+      .sort(sortConfirmedByRules);
 
     const pendingEntries = allEntries
       .filter(isPendingMainEntry)

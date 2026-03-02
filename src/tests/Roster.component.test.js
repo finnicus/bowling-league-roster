@@ -163,7 +163,7 @@ describe('Roster', () => {
     expect(within(table).getByText('💡 Derek').closest('tr').nextElementSibling).toHaveClass('roster-item-exceptions-label');
   });
 
-  test('orders confirmed mains before pending mains, both alphabetically', async () => {
+  test('orders confirmed mains by hdcp, then games, then average; pending stays alphabetical', async () => {
     const appConfig = { league: 'sgcc' };
     const futureDate = new Date(Date.UTC(2099, 0, 15));
 
@@ -175,10 +175,12 @@ describe('Roster', () => {
           parsedDate: futureDate,
           opponent: 'Split Happens',
           bowlers: [
-            { name: 'Zane', status: 'NO', isReserve: false },
+            { name: 'Zed', status: 'YES', isReserve: false },
             { name: 'Alice', status: 'YES', isReserve: false },
+            { name: 'Carl', status: 'YES', isReserve: false },
             { name: 'Maya', status: 'YES', isReserve: false },
             { name: 'Ben', status: 'NO', isReserve: false },
+            { name: 'Derek', status: 'NO', isReserve: false },
             { name: 'Rico', status: 'YES', isReserve: true },
           ],
         },
@@ -187,10 +189,12 @@ describe('Roster', () => {
 
     fetchData.mockResolvedValue({
       data: [
-        { bowler: '🟢\u00A0\u00A0Alice', active: true, hdcp: 10, average: 180, totalGames: 20 },
-        { bowler: '🟢\u00A0\u00A0Maya', active: true, hdcp: 9, average: 176, totalGames: 16 },
+        { bowler: '🟢\u00A0\u00A0Alice', active: true, hdcp: 10, average: 170, totalGames: 12 },
+        { bowler: '🟢\u00A0\u00A0Zed', active: true, hdcp: 10, average: 180, totalGames: 20 },
+        { bowler: '🟢\u00A0\u00A0Carl', active: true, hdcp: 10, average: 190, totalGames: 20 },
+        { bowler: '🟢\u00A0\u00A0Maya', active: true, hdcp: 8, average: 165, totalGames: 8 },
         { bowler: '🟢\u00A0\u00A0Ben', active: true, hdcp: 8, average: 170, totalGames: 18 },
-        { bowler: '🟢\u00A0\u00A0Zane', active: true, hdcp: 7, average: 168, totalGames: 14 },
+        { bowler: '🟢\u00A0\u00A0Derek', active: true, hdcp: 7, average: 168, totalGames: 14 },
         { bowler: '🟢\u00A0\u00A0Rico', active: true, hdcp: 6, average: 165, totalGames: 10 },
       ],
     });
@@ -212,6 +216,6 @@ describe('Roster', () => {
     const table = screen.getByRole('table', { name: 'Bowlers for 15/Jan/2099' });
     const nameCells = Array.from(table.querySelectorAll('td.roster-item-name')).map((cell) => cell.textContent);
 
-    expect(nameCells).toEqual(['Alice', 'Maya', 'Ben', 'Zane', 'Rico (Reserve)']);
+    expect(nameCells).toEqual(['Alice', 'Zed', 'Carl', 'Maya', 'Ben', 'Derek', 'Rico (Reserve)']);
   });
 });

@@ -77,6 +77,26 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 - `Average` and `Hdcp` are sourced directly from the sheet data and are no longer computed in the app.
 - Ensure the source sheet includes `Average` and `Hdcp` columns (case-insensitive keys are supported).
 
+## Roster Sorting Logic
+
+The roster card in `Roster.js` is displayed in grouped order:
+
+1. Confirmed main bowlers (`YES`)
+2. Pending main bowlers (not `YES`)
+3. Reserve bowlers
+4. Suggested bowlers (when fewer than 3 mains are assigned)
+5. Exception bowlers (`EXCEPTION`)
+
+### Confirmed Bowlers Ranking
+
+Confirmed bowlers are not alphabetical. They are sorted by these tie-break rules:
+
+1. Lower `Hdcp` appears lower in the list (higher `Hdcp` appears first)
+2. If `Hdcp` is tied, higher `Total Games` appears lower in the list
+3. If both `Hdcp` and `Total Games` are tied, higher `Average` appears lower in the list
+
+This keeps ordering deterministic while following team selection preference for confirmed players.
+
 ## URL Parameters
 
 - You can now pass query params to control runtime configuration.
