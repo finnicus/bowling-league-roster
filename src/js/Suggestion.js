@@ -4,6 +4,8 @@ import { fetchData, fetchExceptionsData, fetchRosterData, fetchSettingsData } fr
 const SG_TIME_ZONE = 'Asia/Singapore';
 const SLOT_ORDER = ['A', 'B', 'C', 'Reserved'];
 const MAIN_SLOT_ORDER = ['A', 'B', 'C'];
+const STATUS_CONFIRMED = 'YES';
+const STATUS_EXCEPTION = 'EXCEPTION';
 const GROUP_A_NAMES = new Set(['dan', 'bernard', 'jacob', 'daniel']);
 const WILLIAM_NAME = 'william';
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -46,6 +48,8 @@ const getParticipationCount = (match) => (
   (match?.bowlers || []).filter((entry) => !entry.isReserve).length
 );
 
+const isMainEntry = (entry) => !entry?.isReserve && !entry?.isException && String(entry?.status || '').trim().toUpperCase() !== STATUS_EXCEPTION;
+
 const pickLeastGames = (candidates) => {
   if (!candidates || candidates.length === 0) return null;
   const sorted = [...candidates].sort((a, b) => {
@@ -58,6 +62,84 @@ const pickLeastGames = (candidates) => {
     return a.name.localeCompare(b.name);
   });
   return sorted[0];
+};
+
+/**
+ * Build a roster-card style view for upcoming matches so Suggestion and Roster
+ * evaluate participation the same way.
+ *
+ * Plain-language summary:
+ * - Start with upcoming schedule rows.
+ * - Add exception bowlers to the same date.
+ * - Treat the merged result as what the roster "really looks like" for selection logic.
+ */
+const buildUpcomingRosterCards = (upcoming, exceptionsData) => {
+  const exceptionsByDate = exceptionsData.reduce((acc, row) => {
+    const key = toDateKey(row.parsedDate);
+    if (!key) return acc;
+
+    acc[key] = [...(acc[key] || []), ...row.bowlers];
+    return acc;
+  }, {});
+
+  return upcoming.map((match, upcomingIndex) => {
+    const key = toDateKey(match.parsedDate);
+    const exceptionNames = exceptionsByDate[key] || [];
+    const baseBowlers = Array.isArray(match.bowlers)
+      ? match.bowlers
+      : Object.values(match.slots || {})
+        .filter((entry) => normalizeName(entry?.name))
+        .map((entry) => ({
+          slot: entry.slot,
+          name: normalizeName(entry.name),
+          status: entry.status,
+          isReserve: Boolean(entry.isReserve),
+        }));
+
+    const existingNames = new Set(
+      baseBowlers.map((entry) => normalizeName(entry.name).toLowerCase()).filter(Boolean)
+    );
+
+    const appendedExceptions = exceptionNames
+      .map((name) => normalizeName(name))
+      .filter((name) => name)
+      .filter((name) => !existingNames.has(name.toLowerCase()))
+      .map((name) => ({
+        name,
+        status: STATUS_EXCEPTION,
+        isReserve: false,
+        isException: true,
+      }));
+
+    return {
+      ...match,
+      upcomingIndex,
+      bowlers: [...baseBowlers, ...appendedExceptions],
+    };
+  });
+};
+
+/**
+ * Decide which upcoming match should receive suggestions.
+ *
+ * Business rule in plain language:
+ * 1) Find the last upcoming roster card where participation exists (excluding reserves).
+ * 2) If that card has fewer than 3 main bowlers, stop (no suggestion card shown).
+ * 3) Otherwise, suggest for the immediate next upcoming match.
+ */
+const pickNextSuggestionMatch = (upcoming) => {
+  const rosterCards = upcoming.filter((match) => getParticipationCount(match) > 0);
+  const lastRosterCard = rosterCards.length > 0 ? rosterCards[rosterCards.length - 1] : null;
+
+  const mainBowlerCountInLastRosterCard = lastRosterCard
+    ? (lastRosterCard.bowlers || []).filter(isMainEntry).length
+    : 0;
+
+  if (!lastRosterCard || mainBowlerCountInLastRosterCard < 3) {
+    return null;
+  }
+
+  return upcoming[lastRosterCard.upcomingIndex + 1] || null;
 };
 
 function Suggestion({ appConfig }) {
@@ -107,61 +189,8 @@ function Suggestion({ appConfig }) {
           .filter((match) => match.parsedDate >= today)
           .sort((a, b) => a.parsedDate - b.parsedDate);
 
-        const exceptionsByDate = exceptionsData.reduce((acc, row) => {
-          const key = toDateKey(row.parsedDate);
-          if (!key) return acc;
-
-          acc[key] = [...(acc[key] || []), ...row.bowlers];
-          return acc;
-        }, {});
-
-        const upcomingAsRosterCards = upcoming.map((match, upcomingIndex) => {
-          const key = toDateKey(match.parsedDate);
-          const exceptionNames = exceptionsByDate[key] || [];
-          const baseBowlers = Array.isArray(match.bowlers)
-            ? match.bowlers
-            : Object.values(match.slots || {})
-              .filter((entry) => normalizeName(entry?.name))
-              .map((entry) => ({
-                slot: entry.slot,
-                name: normalizeName(entry.name),
-                status: entry.status,
-                isReserve: Boolean(entry.isReserve),
-              }));
-          const existingNames = new Set(
-            baseBowlers.map((entry) => normalizeName(entry.name).toLowerCase()).filter(Boolean)
-          );
-
-          const appendedExceptions = exceptionNames
-            .map((name) => normalizeName(name))
-            .filter((name) => name)
-            .filter((name) => !existingNames.has(name.toLowerCase()))
-            .map((name) => ({
-              name,
-              status: 'EXCEPTION',
-              isReserve: false,
-              isException: true,
-            }));
-
-          return {
-            ...match,
-            upcomingIndex,
-            bowlers: [...baseBowlers, ...appendedExceptions],
-          };
-        });
-
-        const rosterCards = upcomingAsRosterCards.filter((match) => getParticipationCount(match) > 0);
-        const lastRosterCard = rosterCards.length > 0 ? rosterCards[rosterCards.length - 1] : null;
-
-        const mainBowlerCountInLastRosterCard = lastRosterCard
-          ? (lastRosterCard.bowlers || []).filter((entry) => !entry.isReserve && !entry.isException).length
-          : 0;
-
-        if (!lastRosterCard || mainBowlerCountInLastRosterCard < 3) {
-          setNextMatch(null);
-        } else {
-          setNextMatch(upcoming[lastRosterCard.upcomingIndex + 1] || null);
-        }
+        const upcomingAsRosterCards = buildUpcomingRosterCards(upcoming, exceptionsData);
+        setNextMatch(pickNextSuggestionMatch(upcomingAsRosterCards));
 
         const activeBowlers = bowlersData
           .filter((bowler) => bowler.active)
@@ -227,6 +256,14 @@ function Suggestion({ appConfig }) {
 
     const canUseWilliam = () => (williamExistingGamesInMonth + williamMonthlyAssigned + williamMonthlyGenerated) < 1;
 
+    /**
+     * Slot-level suggestion algorithm in plain language:
+     * - If slot is already filled, keep that name.
+     * - If slot is manual, skip auto-pick.
+     * - Otherwise choose the fairest available bowler (least games first, with tie-breakers).
+     * - Apply special rules for Anchor / Group+Least / William restrictions.
+     * - Never duplicate a bowler in the same suggested lineup.
+     */
     const pickForLeast = (slotKey) => {
       let candidates = availableBase.filter((bowler) => !alreadyChosen.has(bowler.name.toLowerCase()));
       if ((slotKey === 'C' || slotKey === 'Reserved')) {

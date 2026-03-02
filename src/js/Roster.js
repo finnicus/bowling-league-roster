@@ -3,6 +3,8 @@ import { fetchData, fetchExceptionsData, fetchRosterData, fetchSettingsData } fr
 
 const SG_TIME_ZONE = 'Asia/Singapore';
 const MAIN_PLAYERS_REQUIRED = 3;
+const STATUS_CONFIRMED = 'YES';
+const STATUS_EXCEPTION = 'EXCEPTION';
 
 const MONTH_INDEX = {
   jan: 0,
@@ -45,6 +47,16 @@ const getSingaporeTodayUtc = () => {
 
   return new Date(Date.UTC(year, month, day));
 };
+
+const getEntryStatusText = (entry) => String(entry?.status || '').trim().toUpperCase();
+
+const isReserveEntry = (entry) => Boolean(entry?.isReserve);
+
+const isExceptionEntry = (entry) => Boolean(entry?.isException) || getEntryStatusText(entry) === STATUS_EXCEPTION;
+
+const isConfirmedMainEntry = (entry) => !isReserveEntry(entry) && !isExceptionEntry(entry) && getEntryStatusText(entry) === STATUS_CONFIRMED;
+
+const isPendingMainEntry = (entry) => !isReserveEntry(entry) && !isExceptionEntry(entry) && getEntryStatusText(entry) !== STATUS_CONFIRMED;
 
 function Roster({ appConfig }) {
   const [rosterRows, setRosterRows] = useState([]);
@@ -174,6 +186,17 @@ function Roster({ appConfig }) {
 
   const sortByName = (entryA, entryB) => normalizeBowlerName(entryA.name).localeCompare(normalizeBowlerName(entryB.name));
 
+  /**
+   * Suggestion candidate ranking (simple fairness model):
+   * 1) Fewer total games first
+   * 2) Lower average next (used as tie-break)
+   * 3) Alphabetical last
+   *
+   * Plain-language summary:
+   * - If two people are both available, prioritize the one who has played less.
+   * - If they played the same amount, use average score to break ties.
+   * - If still tied, sort by name so the result is predictable.
+   */
   const pickSuggestedMainBowlers = (card, missingCount) => {
     if (missingCount <= 0) return [];
 
@@ -202,6 +225,54 @@ function Roster({ appConfig }) {
     }));
   };
 
+  /**
+   * Roster display order algorithm (business rule):
+   * 1) Confirmed main bowlers (alphabetical)
+   * 2) Pending main bowlers (alphabetical)
+   * 3) Reserve bowlers
+   * 4) System suggestions to fill missing main spots (alphabetical)
+   * 5) Exception bowlers (alphabetical), with a visible section label
+   *
+   * Plain-language summary:
+   * - People who said "yes" appear first.
+   * - People still pending appear next.
+   * - Reserves come after the main group.
+   * - If the main group has fewer than 3 players, we add suggested names.
+   * - "Unable to play" entries always stay in their own section at the bottom.
+   */
+  const buildOrderedEntries = (card) => {
+    const allEntries = [...(card.bowlers || [])];
+
+    const confirmedEntries = allEntries
+      .filter(isConfirmedMainEntry)
+      .sort(sortByName);
+
+    const pendingEntries = allEntries
+      .filter(isPendingMainEntry)
+      .sort(sortByName);
+
+    const reserveEntries = allEntries
+      .filter(isReserveEntry)
+      .sort(sortByName);
+
+    const exceptionEntries = allEntries
+      .filter(isExceptionEntry)
+      .sort(sortByName);
+
+    const assignedMainCount = confirmedEntries.length + pendingEntries.length;
+    const missingMainCount = Math.max(MAIN_PLAYERS_REQUIRED - assignedMainCount, 0);
+    const suggestionEntries = pickSuggestedMainBowlers(card, missingMainCount).sort(sortByName);
+
+    return [
+      ...confirmedEntries,
+      ...pendingEntries,
+      ...reserveEntries,
+      ...suggestionEntries,
+      ...(exceptionEntries.length > 0 ? [{ isExceptionLabel: true, key: `${card.date}-exceptions-label` }] : []),
+      ...exceptionEntries,
+    ];
+  };
+
   return (
     <section className="roster-container">
       <div className="roster-grid">
@@ -212,38 +283,7 @@ function Roster({ appConfig }) {
             <table className="roster-bowlers-table" aria-label={`Bowlers for ${card.date}`}>
               <tbody>
               {(() => {
-                const confirmedEntries = [...card.bowlers]
-                  .filter((entry) => {
-                    if (entry.isReserve || entry.isException) return false;
-                    const statusText = String(entry.status || '').trim().toUpperCase();
-                    return statusText === 'YES';
-                  })
-                  .sort(sortByName);
-                const pendingEntries = [...card.bowlers]
-                  .filter((entry) => {
-                    if (entry.isReserve || entry.isException) return false;
-                    const statusText = String(entry.status || '').trim().toUpperCase();
-                    return statusText !== 'YES';
-                  })
-                  .sort(sortByName);
-                const reserveEntries = [...card.bowlers]
-                  .filter((entry) => entry.isReserve)
-                  .sort(sortByName);
-                const exceptionEntries = [...card.bowlers]
-                  .filter((entry) => entry.isException || String(entry.status || '').trim().toUpperCase() === 'EXCEPTION')
-                  .sort(sortByName);
-
-                const missingMainCount = Math.max(MAIN_PLAYERS_REQUIRED - (confirmedEntries.length + pendingEntries.length), 0);
-                const suggestionEntries = pickSuggestedMainBowlers(card, missingMainCount).sort(sortByName);
-
-                const orderedEntries = [
-                  ...confirmedEntries,
-                  ...pendingEntries,
-                  ...reserveEntries,
-                  ...suggestionEntries,
-                  ...(exceptionEntries.length > 0 ? [{ isExceptionLabel: true, key: `${card.date}-exceptions-label` }] : []),
-                  ...exceptionEntries,
-                ];
+                const orderedEntries = buildOrderedEntries(card);
 
                 return orderedEntries.map((entry, entryIndex) => {
                   if (entry.isExceptionLabel) {
@@ -258,10 +298,10 @@ function Roster({ appConfig }) {
                   const displayName = entry.isReserve
                     ? `${entry.name} (Reserve)`
                     : (entry.isSuggestion ? `💡 ${entry.name}` : entry.name);
-                  const statusText = String(entry.status || '').trim().toUpperCase();
-                  const isException = entry.isException || statusText === 'EXCEPTION';
+                  const statusText = getEntryStatusText(entry);
+                  const isException = isExceptionEntry(entry);
                   const isSuggestion = statusText === 'SUGGESTED' || entry.isSuggestion;
-                  const isConfirmed = statusText === 'YES';
+                  const isConfirmed = statusText === STATUS_CONFIRMED;
                   const statusIcon = isException ? '' : (isSuggestion ? '💡' : (isConfirmed ? '✅' : '?'));
                   const statusClassName = isException
                     ? 'status-exception'
