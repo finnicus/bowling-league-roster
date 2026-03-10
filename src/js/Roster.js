@@ -174,7 +174,12 @@ function Roster({ appConfig }) {
 
   const cards = useMemo(() => {
     const today = getSingaporeTodayUtc();
-    return rosterRows.filter((row) => row.parsedDate >= today && Array.isArray(row.bowlers) && row.bowlers.length > 0);
+    return rosterRows.filter((row) => (
+      row.parsedDate >= today
+      && Array.isArray(row.bowlers)
+      && row.bowlers.length > 0
+      && row.bowlers.some((entry) => !isExceptionEntry(entry))
+    ));
   }, [rosterRows]);
 
   const formatDisplayDate = (dateValue, parsedDate) => {

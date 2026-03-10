@@ -220,4 +220,46 @@ describe('Roster', () => {
 
     expect(nameCells).toEqual(['Alice', 'Ben', 'Carl', 'Dane', 'Maya', 'Noah', 'Zane', 'Rico (Reserve)']);
   });
+
+  test('does not render exception-only upcoming match cards', async () => {
+    const appConfig = { league: 'sgcc' };
+    const futureDate = new Date(Date.UTC(2099, 0, 22));
+
+    fetchRosterData.mockResolvedValue({
+      data: [
+        {
+          league: 'sgcc',
+          date: '22/Jan/2099',
+          parsedDate: futureDate,
+          opponent: 'Mega Ark Team',
+          bowlers: [],
+        },
+      ],
+    });
+
+    fetchData.mockResolvedValue({ data: [] });
+
+    fetchSettingsData.mockResolvedValue({
+      data: {
+        season: '2026',
+      },
+    });
+
+    fetchExceptionsData.mockResolvedValue({
+      data: [
+        {
+          parsedDate: futureDate,
+          bowlers: ['Alice'],
+        },
+      ],
+    });
+
+    render(<Roster appConfig={appConfig} />);
+
+    await waitFor(() => {
+      expect(fetchExceptionsData).toHaveBeenCalledWith(appConfig, '2026');
+    });
+
+    expect(screen.queryByText('Team: Mega Ark Team')).not.toBeInTheDocument();
+  });
 });
