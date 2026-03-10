@@ -44,7 +44,7 @@ const toDateKey = (date) => {
 };
 
 const getParticipationCount = (match) => (
-  (match?.bowlers || []).filter((entry) => !entry.isReserve).length
+  (match?.bowlers || []).filter((entry) => !entry.isReserve && !entry.isException).length
 );
 
 const isMainEntry = (entry) => !entry?.isReserve && !entry?.isException && String(entry?.status || '').trim().toUpperCase() !== STATUS_EXCEPTION;

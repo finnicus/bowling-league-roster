@@ -202,7 +202,7 @@ describe('Suggestion', () => {
     expect(screen.queryByText('💡 Suggestion')).not.toBeInTheDocument();
   });
 
-  test('renders nothing when latest roster card is exception-only and has fewer than three main bowlers', async () => {
+  test('ignores exception-only match for participation count', async () => {
     const appConfig = { league: 'sgcc' };
     const firstUpcoming = new Date(Date.UTC(2099, 2, 17));
     const secondUpcoming = new Date(Date.UTC(2099, 2, 24));
@@ -290,7 +290,8 @@ describe('Suggestion', () => {
       expect(fetchExceptionsData).toHaveBeenCalledWith(appConfig, '2026');
     });
 
-    expect(screen.queryByText('💡 Suggestion')).not.toBeInTheDocument();
+    expect(screen.getByText('💡 Suggestion')).toBeInTheDocument();
+    expect(screen.getByText('Team: Pin Crushers')).toBeInTheDocument();
   });
 
   test('ignores reserve-only match for participation count', async () => {
