@@ -1,9 +1,9 @@
 {
   "files": {
     "main.css": "/bowling-league-roster/static/css/main.2cf76bd4.css",
-    "main.js": "/bowling-league-roster/static/js/main.676f0267.js",
+    "main.js": "/bowling-league-roster/static/js/main.ec74dbf9.js",
     "static/media/tessensohn.pdf": "/bowling-league-roster/static/media/tessensohn.79404cb341a6cb713fec.pdf",
-    "static/media/tampines.pdf": "/bowling-league-roster/static/media/tampines.4a69c68dac3f8912c0cb.pdf",
+    "static/media/tampines.pdf": "/bowling-league-roster/static/media/tampines.55e4ff1e397743dc45a0.pdf",
     "static/media/sgcc.xls": "/bowling-league-roster/static/media/sgcc.33f5e046f14f129a00a2.xls",
     "static/media/tampines.png": "/bowling-league-roster/static/media/tampines.fc8f640e7f483f57d954.png",
     "static/media/tessensohn.png": "/bowling-league-roster/static/media/tessensohn.fc8f640e7f483f57d954.png",
@@ -11,10 +11,10 @@
     "static/media/sgcc.png": "/bowling-league-roster/static/media/sgcc.990ff9110172544dd2b4.png",
     "index.html": "/bowling-league-roster/index.html",
     "main.2cf76bd4.css.map": "/bowling-league-roster/static/css/main.2cf76bd4.css.map",
-    "main.676f0267.js.map": "/bowling-league-roster/static/js/main.676f0267.js.map"
+    "main.ec74dbf9.js.map": "/bowling-league-roster/static/js/main.ec74dbf9.js.map"
   },
   "entrypoints": [
     "static/css/main.2cf76bd4.css",
-    "static/js/main.676f0267.js"
+    "static/js/main.ec74dbf9.js"
   ]
 }
