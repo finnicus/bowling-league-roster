@@ -201,9 +201,17 @@ function Roster({ appConfig }) {
     }
   );
 
+  const isNewBowlerEntry = (entry) => {
+    const stats = getEntryStats(entry);
+    return Number(stats.totalGames) === 0;
+  };
+
   const sortConfirmedByRules = (entryA, entryB) => {
     const statsA = getEntryStats(entryA);
     const statsB = getEntryStats(entryB);
+
+    const nbPriorityDiff = Number(statsA.totalGames === 0) - Number(statsB.totalGames === 0);
+    if (nbPriorityDiff !== 0) return -nbPriorityDiff;
 
     const hdcpDiff = statsB.hdcp - statsA.hdcp;
     if (hdcpDiff !== 0) return hdcpDiff;
@@ -217,6 +225,12 @@ function Roster({ appConfig }) {
     const scoreDiff = statsA.totalScore - statsB.totalScore;
     if (scoreDiff !== 0) return scoreDiff;
 
+    return sortByName(entryA, entryB);
+  };
+
+  const sortByNewBowlerThenName = (entryA, entryB) => {
+    const nbPriorityDiff = Number(isNewBowlerEntry(entryA)) - Number(isNewBowlerEntry(entryB));
+    if (nbPriorityDiff !== 0) return -nbPriorityDiff;
     return sortByName(entryA, entryB);
   };
 
@@ -289,19 +303,19 @@ function Roster({ appConfig }) {
 
     const pendingEntries = allEntries
       .filter(isPendingMainEntry)
-      .sort(sortByName);
+      .sort(sortByNewBowlerThenName);
 
     const reserveEntries = allEntries
       .filter(isReserveEntry)
-      .sort(sortByName);
+      .sort(sortByNewBowlerThenName);
 
     const exceptionEntries = allEntries
       .filter(isExceptionEntry)
-      .sort(sortByName);
+      .sort(sortByNewBowlerThenName);
 
     const assignedMainCount = confirmedEntries.length + pendingEntries.length;
     const missingMainCount = Math.max(MAIN_PLAYERS_REQUIRED - assignedMainCount, 0);
-    const suggestionEntries = pickSuggestedMainBowlers(card, missingMainCount).sort(sortByName);
+    const suggestionEntries = pickSuggestedMainBowlers(card, missingMainCount).sort(sortByNewBowlerThenName);
 
     return [
       ...confirmedEntries,
@@ -338,6 +352,7 @@ function Roster({ appConfig }) {
                   const displayName = entry.isReserve
                     ? `${entry.name} (Reserve)`
                     : entry.name;
+                  const isNewBowler = isNewBowlerEntry(entry);
                   const statusText = getEntryStatusText(entry);
                   const isException = isExceptionEntry(entry);
                   const isSuggestion = statusText === 'SUGGESTED' || entry.isSuggestion;
@@ -353,7 +368,7 @@ function Roster({ appConfig }) {
                   return (
                     <tr className="roster-item" key={`${card.date}-${entry.name}-${entry.isReserve ? 'reserve' : 'main'}-${entryIndex}`}>
                       <td className="roster-item-name">{displayName}</td>
-                      <td className="roster-item-hdcp"><span className="roster-hdcp-badge">H {stats.hdcp}</span></td>
+                      <td className="roster-item-hdcp"><span className="roster-hdcp-badge">{isNewBowler ? 'NB' : `H ${stats.hdcp}`}</span></td>
                       <td className={`roster-item-status ${statusClassName}`} aria-label={statusAriaLabel}>
                         {!isException && <span className={`roster-status-icon ${statusClassName}`}>{statusIcon}</span>}
                       </td>

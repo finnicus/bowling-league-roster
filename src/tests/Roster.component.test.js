@@ -262,4 +262,54 @@ describe('Roster', () => {
 
     expect(screen.queryByText('Team: Mega Ark Team')).not.toBeInTheDocument();
   });
+
+  test('shows NB for zero-game bowlers and lists them on top', async () => {
+    const appConfig = { league: 'sgcc' };
+    const futureDate = new Date(Date.UTC(2099, 1, 5));
+
+    fetchRosterData.mockResolvedValue({
+      data: [
+        {
+          league: 'sgcc',
+          date: '05/Feb/2099',
+          parsedDate: futureDate,
+          opponent: 'Rising Pins',
+          bowlers: [
+            { name: 'Alice', status: 'YES', isReserve: false },
+            { name: 'Ben', status: 'YES', isReserve: false },
+            { name: 'Nina', status: 'NO', isReserve: false },
+          ],
+        },
+      ],
+    });
+
+    fetchData.mockResolvedValue({
+      data: [
+        { bowler: '🟢\u00A0\u00A0Alice', active: true, hdcp: 10, average: 170, totalGames: 30, totalScore: 5100 },
+        { bowler: '🟢\u00A0\u00A0Ben', active: true, hdcp: 0, average: 0, totalGames: 0, totalScore: 0 },
+        { bowler: '🟢\u00A0\u00A0Nina', active: true, hdcp: 0, average: 0, totalGames: 0, totalScore: 0 },
+      ],
+    });
+
+    fetchSettingsData.mockResolvedValue({
+      data: {
+        season: '2026',
+      },
+    });
+
+    fetchExceptionsData.mockResolvedValue({ data: [] });
+
+    render(<Roster appConfig={appConfig} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Team: Rising Pins')).toBeInTheDocument();
+    });
+
+    const table = screen.getByRole('table', { name: 'Bowlers for 05/Feb/2099' });
+    const nameCells = Array.from(table.querySelectorAll('td.roster-item-name')).map((cell) => cell.textContent);
+
+    expect(nameCells).toEqual(['Ben', 'Alice', 'Nina']);
+    expect(within(table).getAllByText('NB').length).toBeGreaterThan(0);
+    expect(within(table).getByText('Alice').closest('tr')).toHaveTextContent('H 10');
+  });
 });
