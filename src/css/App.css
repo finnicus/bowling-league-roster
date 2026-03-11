@@ -248,6 +248,28 @@
   font-size: 15px;
 }
 
+.latest-results-wrap {
+  margin: 0 0 10px 0;
+}
+
+.latest-results-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 999px;
+  background-color: white;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.latest-results-link:hover,
+.latest-results-link:focus {
+  text-decoration: underline;
+}
+
 .suggestion-table {
   width: 100%;
   border-collapse: collapse;

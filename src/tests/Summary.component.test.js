@@ -78,4 +78,74 @@ describe('Summary', () => {
 
     consoleErrorSpy.mockRestore();
   });
+
+  test('renders result link when league result file exists', async () => {
+    const updatedAt = new Date('2099-01-01T00:00:00.000Z');
+    const appConfig = { refreshInterval: 300000, league: 'tampines' };
+    const onLoadingChange = jest.fn();
+    const onLastUpdatedChange = jest.fn();
+
+    fetchData.mockResolvedValue({
+      data: [
+        {
+          bowler: 'Alice',
+          gender: 'F',
+          hdcp: 8,
+          totalGames: 12,
+          totalScore: 2040,
+          average: 170,
+        },
+      ],
+      updatedAt,
+      source: 'dummy',
+    });
+
+    render(
+      <Summary
+        appConfig={appConfig}
+        onLoadingChange={onLoadingChange}
+        onLastUpdatedChange={onLastUpdatedChange}
+      />
+    );
+
+    const resultLink = await screen.findByRole('link', { name: /latest results/i });
+    expect(resultLink).toBeInTheDocument();
+    expect(resultLink).toHaveAttribute('href', expect.stringMatching(/tampines\.pdf$/));
+  });
+
+  test('does not render result link when league result file is missing', async () => {
+    const updatedAt = new Date('2099-01-01T00:00:00.000Z');
+    const appConfig = { refreshInterval: 300000, league: 'unknown-league' };
+    const onLoadingChange = jest.fn();
+    const onLastUpdatedChange = jest.fn();
+
+    fetchData.mockResolvedValue({
+      data: [
+        {
+          bowler: 'Alice',
+          gender: 'F',
+          hdcp: 8,
+          totalGames: 12,
+          totalScore: 2040,
+          average: 170,
+        },
+      ],
+      updatedAt,
+      source: 'dummy',
+    });
+
+    render(
+      <Summary
+        appConfig={appConfig}
+        onLoadingChange={onLoadingChange}
+        onLastUpdatedChange={onLastUpdatedChange}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Alice')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole('link', { name: /latest results/i })).not.toBeInTheDocument();
+  });
 });

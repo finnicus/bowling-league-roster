@@ -35,8 +35,24 @@ const columns = [
   }),
 ];
 
+const resolveLeagueResultUrl = (league) => {
+  const normalizedLeague = String(league || '').trim().toLowerCase();
+  if (!normalizedLeague) return null;
+
+  try {
+    return require(`../result/${normalizedLeague}.pdf`);
+  } catch {
+    try {
+      return require(`../result/${normalizedLeague}.xls`);
+    } catch {
+      return null;
+    }
+  }
+};
+
 function Summary({ appConfig, onLoadingChange, onLastUpdatedChange }) {
   const [data, setData] = useState([]);
+  const resultUrl = resolveLeagueResultUrl(appConfig?.league);
 
   const loadBowlersData = useCallback(async () => {
     try {
@@ -70,6 +86,14 @@ function Summary({ appConfig, onLoadingChange, onLastUpdatedChange }) {
   return (
     <>
       <div className="table-container">
+        {resultUrl && (
+          <p className="latest-results-wrap">
+            <a className="latest-results-link" href={resultUrl} target="_blank" rel="noopener noreferrer">
+              <span aria-hidden="true">📝</span>
+              <span>Latest Results</span>
+            </a>
+          </p>
+        )}
         <table className="data-table">
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
